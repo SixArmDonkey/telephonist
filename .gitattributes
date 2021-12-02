@@ -1,0 +1,5 @@
+tests/ export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+runtests export-ignore
+docs/ export-ignore

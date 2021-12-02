@@ -1,0 +1,26 @@
+{
+	"name"        : "buffalokiwi/telephonist",
+	"description" : "Routes requests to somewhere for things",
+	"keywords"    : [],
+	"license"     : "MIT",
+	"type"        : "library",
+  "authors"     : [
+    {
+      "name" : "John Quinn",
+      "email" : "johnquinn3@gmail.com",
+      "role" : "Developer"
+    }
+  ],
+  "autoload" : {
+    "classmap": ["src/"]
+  },
+  "autoload-dev" : {
+    "classmap": ["tests/"]
+  },
+  "require" : {
+    "php" : "~8.0"
+  },
+  "require-dev" : {
+    "phpunit/phpunit": "^9.3"
+  }
+}

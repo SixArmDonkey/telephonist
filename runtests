@@ -1,0 +1,4 @@
+#!/bin/bash
+composer dump-autoload
+dir=$(dirname "$0")
+/bin/php ${dir}/vendor/phpunit/phpunit/phpunit --colors --bootstrap ${dir}/tests/bootstrap.php ${dir}/tests
