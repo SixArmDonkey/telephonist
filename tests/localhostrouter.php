@@ -11,6 +11,7 @@
 declare( strict_types=1 );
 
 namespace buffalokiwi\telephonist\tests;
+require_once( __DIR__ . '/bootstrap.php' );
 
 use buffalokiwi\telephonist\FunctionalRouteConfig;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteOptions;
@@ -23,7 +24,6 @@ use buffalokiwi\telephonist\http\XMLHTTPRequestRouteOption;
 use buffalokiwi\telephonist\RouteNotFoundException;
 use buffalokiwi\teleponist\http\HTTPRouteFactoryGroup;
 
-require_once( __DIR__ . '/bootstrap.php' );
 
 class LocalRouterTest
 {

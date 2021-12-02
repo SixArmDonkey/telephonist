@@ -1,6 +1,9 @@
 # Telephonist
 
 
+
+```php
+
 use buffalokiwi\telephonist\FunctionalRouteConfig;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteOptions;
 use buffalokiwi\telephonist\http\DefaultHTTPRouter;
@@ -12,7 +15,6 @@ use buffalokiwi\telephonist\http\XMLHTTPRequestRouteOption;
 use buffalokiwi\telephonist\RouteNotFoundException;
 use buffalokiwi\teleponist\http\HTTPRouteFactoryGroup;
 
-```php
 class LocalRouterTest
 {
   public const ROUTE_CONFIG = [
