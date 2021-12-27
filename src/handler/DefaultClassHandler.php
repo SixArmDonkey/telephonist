@@ -69,9 +69,9 @@ class DefaultClassHandler implements IRouteHandler
   
   /**
    * 
-   * @param string $class The fully qualified class name 
-   * @param string $method The method name 
-   * @param array $methodArgs Arguments to be passed to the method endpoint.  If this is an associative array. 
+   * @param mixed $resource The fully qualified class name 
+   * @param string $identifier The method name 
+   * @param array $args Arguments to be passed to the method endpoint.  If this is an associative array. 
    * named arguments will be used.
    * 
    * @param array $context Meta data.  This array may contain keys:
@@ -98,28 +98,28 @@ class DefaultClassHandler implements IRouteHandler
    *         class exists, then the instantiateClass() method is called.  The result of this method must be an instance
    *         of the supplied type.
    */
-  public function execute( mixed $class, string $method = '', array $methodArgs = [], array $context = [] ) : mixed
+  public function execute( mixed $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
   {
-    if ( empty( $class ) || !is_string( $class ))
-      throw new RouteConfigurationException( 'execute() arg[0] $resoource|$class must be a string and must not be empty' );
-    else if ( empty( $method ))
-      throw new RouteConfigurationException( 'Method endpoint for class ' . $class . ' must not be empty' );
-    else if ( !class_exists( $class ))
-      throw new RouteConfigurationException( "Class: " . $class . " does not exist" );
+    if ( empty( $resource ))
+      throw new RouteConfigurationException( 'execute() arg[0] $resoource|$resource must be a string and must not be empty' );
+    else if ( empty( $identifier ))
+      throw new RouteConfigurationException( 'Method endpoint for class ' . $resource . ' must not be empty' );
+    else if ( !class_exists( $resource ))
+      throw new RouteConfigurationException( "Class: " . $resource . " does not exist" );
     
     
-    $c = new ReflectionClass( $class );
+    $c = new ReflectionClass( $resource );
     
     try {
-      $m = $c->getMethod( $method );
+      $m = $c->getMethod( $identifier );
     } catch( ReflectionException ) {
       $m = null;
     }
     
     if ( empty( $m ))
     {
-      throw new RouteConfigurationException( 'Method "' . $method . '" is not a valid method of class '
-        . '"' . $class . '".' );
+      throw new RouteConfigurationException( 'Method "' . $identifier . '" is not a valid method of class '
+        . '"' . $resource . '".' );
     }
 
     //..Get class constructor arguments    
@@ -132,24 +132,24 @@ class DefaultClassHandler implements IRouteHandler
     
     foreach( $this->getArgumentArray( self::C_ARGS_METHOD, $context ) as $k => $v )
     {
-      $methodArgs[$k] = $v;
+      $args[$k] = $v;
     }
     
     
     
     $mArgs = $this->reflectionParametersToArgumentsArray( 
-      $methodArgs,
+      $args,
       ...$m->getParameters()
     );
         
     //..If the method is static, then we execute and return 
     if ( $m->isStatic())
     {
-      return $this->executeStatic( $class, $method, $cArgs, $mArgs );
+      return $this->executeStatic( $resource, $identifier, $cArgs, $mArgs );
     }
     
     //..Execute the method 
-    return (new $class( ...$cArgs ))->$method( ...$mArgs );
+    return (new $resource( ...$cArgs ))->$identifier( ...$mArgs );
   }
   
   
@@ -194,7 +194,9 @@ class DefaultClassHandler implements IRouteHandler
       
       //..Try for an instance 
       $instance = $this->getInstance( $t );
-      if ( !empty( $instance ) && ( is_a( $instance, $t ) || is_subclass_of( $instance, $t )))
+      
+      //..Psalm barks at this, but I think it's fine. We're testing for everything here.
+      if ( !empty( $instance ) && ( is_subclass_of( $instance, $t ) || ( is_a( $instance, $t ))))
         break;
     }
     
@@ -363,9 +365,7 @@ class DefaultClassHandler implements IRouteHandler
     
     throw new RouteConfigurationException( 'Parameter "' . $k 
       . '" has already been assigned a value of "' 
-      . (( is_scalar( json_encode( $value ))) 
-          ? $value 
-          : (( is_object( $value )) ? get_class( $value ) : gettype( $value ))) . '"' );    
+      . json_encode( $value ));
   }
   
   
@@ -397,8 +397,15 @@ class DefaultClassHandler implements IRouteHandler
         $types[] = $t->getName();
       }
     }
-    else if ( !in_array( $type->getName(), self::T_SCALAR ) && $type->getName() != self::T_ARRAY )
-      $types[] = $type->getName();    
+    else if ( $type instanceof \ReflectionNamedType )
+    {
+      //..Psalm is a bit retarded at times.  It barks at $type::getName() not being a method.
+      //..It is, and $type is an instance of ReflectioNamedType 
+      if ( !in_array( $type->getName(), self::T_SCALAR ) && $type->getName() != self::T_ARRAY )
+        $types[] = $type->getName();
+    }
+    else
+      throw new \Exception( '$type must be an instance of ReflectionUnionType or ReflectionNamedType' );
     
     return $types;
   }
@@ -427,7 +434,9 @@ class DefaultClassHandler implements IRouteHandler
         . 'intention may be unclear.  Either remove the class arguments, remove the static designation, or move the '
         . 'static method to a new static class with no constructor' );
     }
-
+      
+    //..Psalm doesn't like class strings
+    //..This is fine.  $resource/$class is fully tested ahead of this method call.
     return $class::$method( ...$mArgs );    
   }
   

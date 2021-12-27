@@ -34,7 +34,8 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
    */
   private Closure $iRouteFactory;
   
-  private $routes = [];
+  
+  private array $routes = [];
   
   
   /**
@@ -47,7 +48,7 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
     else
     {
       $handler = new FunctionalHandler();
-      $this->iRouteFactory = fn( string $path, Closure $endpoint, array $options, array $context ) 
+      $this->iRouteFactory = fn( string $path, Closure $endpoint, array $options, array $context ) : IHTTPRoute
         => new DefaultHTTPRoute( $handler, $path, $endpoint, $options, $context );
     }
   }
@@ -130,13 +131,13 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
    * This is to sort of reduce the number of route matches each request must make. 
    * Returns the number of PATH_DELIM in a given path.
    * @param string $path The path 
-   * @return string
+   * @return int bucket 
    */
-  protected function getBucket( string $path ) : string
+  protected function getBucket( string $path ) : int
   {
     if ( $path == self::PATH_DELIM )
-      return '0';
+      return 0;
     
-    return (string)substr_count( $path, self::PATH_DELIM );
+    return substr_count( $path, self::PATH_DELIM );
   }  
 }

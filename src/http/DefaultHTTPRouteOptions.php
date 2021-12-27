@@ -27,21 +27,15 @@ class DefaultHTTPRouteOptions implements IHTTPRouteOptions
    * A map of available options.
    * 
    * [command => [IHTTPRouteOption[]];
-   * 
-   * @var IHTTPRouteOption[] 
    */
   private array $options = [];
   
   /**
    * Complete list of options 
-   * @var array
    */
   private array $masterList = [];
   
   
-  /**
-   * @param IHTTPRouteOption $options Options 
-   */
   public function __construct( IHTTPRouteOption ...$options )
   {
     foreach( $options as $o ) 

@@ -42,7 +42,7 @@ class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
     else
     {
       $handler = new DefaultClassHandler();
-      $this->iRouteFactory = fn( string $path, string $class, string $method, array $options, array $context ) 
+      $this->iRouteFactory = fn( string $path, string $class, string $method, array $options, array $context ) : IHTTPRoute
         => new ClassHTTPRoute( $handler, $path, $class, $method, $options, $context );
     }
   }

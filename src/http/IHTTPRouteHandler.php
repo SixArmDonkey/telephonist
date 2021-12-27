@@ -15,10 +15,9 @@ namespace buffalokiwi\telephonist\http;
 
 /**
  * IHTTPRoute implementation are responsible for executing routes.  This means making the final connection to 
- * some endpoint and returning the response.  The issue is that the current route implementation is not extensible.
- * Therefore, this handler object is to be used inside of the IHTTPRoute::execute() method.
+ * some endpoint and returning the response.  
  * 
- * Some handlers:
+ * Some handlers maybe?
  * 
  * 1) Default Class Handler - Class constructor and method arguments are passed via the context 
  *    array keys 'args_class' and 'args_method'.

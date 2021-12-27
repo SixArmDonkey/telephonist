@@ -158,10 +158,9 @@ abstract class HTTPRoute implements IHTTPRoute
   
   private function castValue( string $value ) : mixed 
   {
-    if ( $value === null )
+    if ( empty( $value ))
       return $value;
-    
-    if ( ctype_digit((string)$value ))
+    else if ( ctype_digit( $value ))
       return (int)$value;
     else if ( is_numeric( $value ))
       return (float)$value;

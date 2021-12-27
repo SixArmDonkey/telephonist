@@ -29,8 +29,15 @@ class MethodRouteOption extends HTTPRouteOption
   public const OPTIONS = 'OPTIONS';
   public const HEAD = 'HEAD';
   
-  public const VALID = [self::GET, self::POST, self::PUT, self::PATCH, 
-    self::DELETE, self::OPTIONS, self::HEAD];
+  public const VALID = [
+    self::GET, 
+    self::POST, 
+    self::PUT, 
+    self::PATCH, 
+    self::DELETE, 
+    self::OPTIONS, 
+    self::HEAD
+  ];
   
   private const K_REQUEST_METHOD = 'REQUEST_METHOD';
   

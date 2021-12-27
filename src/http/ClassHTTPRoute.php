@@ -14,8 +14,6 @@ namespace buffalokiwi\telephonist\http;
 
 use buffalokiwi\telephonist\handler\IRouteHandler;
 use InvalidArgumentException;
-use function ctype_digit;
-
 
 class ClassHTTPRoute extends HTTPRoute implements IHTTPRoute
 {

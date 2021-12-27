@@ -28,8 +28,10 @@ use buffalokiwi\teleponist\http\HTTPRouteFactoryGroup;
 class LocalRouterTest
 {
   public const ROUTE_CONFIG = [
-    'test' => [LocalRouterTest::class, 'helloRouter', ['GET'], []],
-    'test/(\d+)' => [LocalRouterTest::class, 'helloRouterArg', ['GET'], []]
+    'test' => [
+       '(\d+)' => [LocalRouterTest::class, 'helloRouterArg', ['GET'], []],
+       '' => [LocalRouterTest::class, 'helloRouter', ['GET'], []]
+    ]
   ];
 
   public static function helloRouter() : string
@@ -53,11 +55,11 @@ $router = new DefaultHTTPRouter(
       return 'Hello Router 2!';
     })
     ->add( 'test2/(\d+[a-z])', function( int|string $int, array $context ) {
-      return 'Found ' . (string)$int;
+      return 'Found ' . (string)$int . ' with context ' . $context['context'];
     }, ['GET'], ['context' => 'foo'] )
   ),
   new DefaultHTTPRouteOptions(
-    new MethodRouteOption(),
+    new MethodRouteOption( MethodRouteOption::GET ),
     new XMLHTTPRequestRouteOption()
 ));
 

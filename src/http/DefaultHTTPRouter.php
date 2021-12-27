@@ -95,7 +95,7 @@ class DefaultHTTPRouter implements IHTTPRouter
             return false;
         }
       }
-      else if ( $strict && !$hasOption )
+      else if ( $this->strict )
       {
         throw new RouteConfigurationException( 'The requested route lists option "' . $opt 
           . '", which is not currently configured within this router.' );
