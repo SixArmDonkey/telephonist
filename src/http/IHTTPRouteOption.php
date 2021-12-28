@@ -12,6 +12,8 @@ declare( strict_types=1 );
 
 namespace buffalokiwi\telephonist\http;
 
+use buffalokiwi\telephonist\RouteValidationException;
+
 
 /**
  * A router plugin used to add flags to route configuration entries.
@@ -27,8 +29,8 @@ interface IHTTPRouteOption
   
   /**
    * Validate this flag against the current request 
-   * @param IHTTPRouteRequest $request 
-   * @param IHTT{Route $route Route 
+   * @param IHTTPRouteRequest $request Request
+   * @param IHTTPRoute $route Route 
    * @return bool is valid.  This can throw an exception or return false to try a different route.
    * @throws RouteValidationException
    */

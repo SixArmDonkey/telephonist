@@ -61,7 +61,7 @@ class MethodRouteOption extends HTTPRouteOption
   /**
    * Validate this flag against the current request 
    * @param IHTTPRouteRequest $request 
-   * @param IHTT{Route $route Route 
+   * @param IHTTPRoute $route Route 
    * @return bool is valid.  This can throw an exception or return false to try a different route.
    * @throws RouteValidationException
    */

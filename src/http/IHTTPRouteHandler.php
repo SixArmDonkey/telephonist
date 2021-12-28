@@ -30,5 +30,12 @@ namespace buffalokiwi\telephonist\http;
  */
 interface IHTTPRouteHandler 
 {
-  public function execute( string $class, string $method, array $context );
+  /**
+   * 
+   * @param string $class
+   * @param string $method
+   * @param array $context
+   * @return mixed
+   */
+  public function execute( string $class, string $method, array $context ) : mixed;
 }

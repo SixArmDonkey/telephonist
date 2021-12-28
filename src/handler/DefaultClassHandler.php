@@ -177,6 +177,7 @@ class DefaultClassHandler implements IRouteHandler
    * Given a list of class names, call getInstance() for each and return the first non-null instance.
    * @param string $types
    * @return object
+   * @psalm-suppress ArgumentTypeCoercion
    */
   private function getInstanceFromTypeList( string ...$types ) : ?object
   {
@@ -196,6 +197,8 @@ class DefaultClassHandler implements IRouteHandler
       $instance = $this->getInstance( $t );
       
       //..Psalm barks at this, but I think it's fine. We're testing for everything here.
+      //..We cannot use class strings since this comes from a config array and is desiged to use strings representing
+      //  class names. 
       if ( !empty( $instance ) && ( is_subclass_of( $instance, $t ) || ( is_a( $instance, $t ))))
         break;
     }
@@ -419,6 +422,7 @@ class DefaultClassHandler implements IRouteHandler
    * @param array $mArgs
    * @return mixed
    * @throws RouteConfigurationException
+   * @psalm-suppress InvalidStringClass
    */
   private function executeStatic( string $class, string $method, array $cArgs, array $mArgs ) : mixed 
   {
