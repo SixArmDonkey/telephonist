@@ -58,7 +58,7 @@ class NestedArrayRouteFactoryTest extends TestCase
   
   private const TEST5 = [
     'path5' => [
-      '(\d+)--END' => [
+      '(\d+)' => [
         self::PATH5,
         self::PATH1
       ],
@@ -82,7 +82,7 @@ class NestedArrayRouteFactoryTest extends TestCase
       '(\d+)' => self::PATH4
      ],      
     'path5' => [
-      '(\d+)--END' => [
+      '(\d+)' => [
         self::PATH5,
         self::PATH1
       ],
@@ -285,10 +285,12 @@ class NestedArrayRouteFactoryTest extends TestCase
   {
     $c = $this->getInstance( self::TEST5 );
     
+    
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '' )));
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '/' )));
     
     $res = $c->getPossibleRoutes( $this->getMockRequest( 'a/b' ));
+    
 
     $this->assertCount( 2, $res );
     $this->assertTrue( isset( $res[0] ));
@@ -385,7 +387,7 @@ class NestedArrayRouteFactoryTest extends TestCase
        ],
 
       'path5' => [
-        '(\d+)--END' => [
+        '(\d+)' => [
           ['class_name', 'method_name', ['method' => 'get'], ['context_array']],
           ['class_name', 'method_name', ['method' => 'post'], ['context_array']]
         ],

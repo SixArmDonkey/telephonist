@@ -22,6 +22,10 @@ use function ctype_alnum;
  */
 abstract class HTTPRouteOption implements IHTTPRouteOption
 {
+  /**
+   * 
+   * @var array<string>
+   */
   private array $command;
   
   public function __construct( string ...$command )
@@ -38,7 +42,7 @@ abstract class HTTPRouteOption implements IHTTPRouteOption
   
   /**
    * Retrieve the command string(s) used to trigger this option
-   * @return string[]
+   * @return array<string>
    * @final
    */
   public final function getCommand() : array

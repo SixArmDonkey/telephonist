@@ -20,6 +20,10 @@ use InvalidArgumentException;
 
 class HTTPRouteFactoryGroup implements IHTTPRouteFactory
 {
+  /**
+   * 
+   * @var array<IHTTPRouteFactory>
+   */
   private array $factoryList;
   
   public function __construct( IHTTPRouteFactory ...$factoryList )
@@ -34,16 +38,19 @@ class HTTPRouteFactoryGroup implements IHTTPRouteFactory
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
    * @param IHTTPRouteRequest $request 
-   * @return IHTTPRoute[] Possible routes 
+   * @return array<IHTTPRoute> Possible routes 
    */
   public function getPossibleRoutes( IHTTPRouteRequest $request ) : array
   {
+    /** @var array<IHTTPRoute> $out */
     $out = [];
     
     foreach( $this->factoryList as $factory )
     {
       foreach( $factory->getPossibleRoutes( $request ) as $route )
       {
+        assert( $route instanceof IHTTPRoute );
+        
         $out[] = $route;
       }
     }

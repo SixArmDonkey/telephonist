@@ -34,11 +34,11 @@ interface IRouteHandler
 {
   /**
    * Execute some endpoint handler.  This will execute either resource or the identifier at resource.
-   * @param mixed $resource Class name, file name, etc 
+   * @param class-string|object $resource Class name, file name, etc 
    * @param string $identifier Optional. When resource is class, this would be the method name
    * @param array $args Arguments
    * @param array $context Context 
    * @return mixed
    */  
-  public function execute( mixed $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed;
+  public function execute( string|object $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed;
 }

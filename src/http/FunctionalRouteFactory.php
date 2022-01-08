@@ -35,6 +35,10 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
   private Closure $iRouteFactory;
   
   
+  /**
+   * 
+   * @var array<int,array<string,list<array{0:Closure,1:array,2:array}>>>
+   */
   private array $routes = [];
   
   
@@ -48,8 +52,12 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
     else
     {
       $handler = new FunctionalHandler();
-      $this->iRouteFactory = fn( string $path, Closure $endpoint, array $options, array $context ) : IHTTPRoute
-        => new DefaultHTTPRoute( $handler, $path, $endpoint, $options, $context );
+      $this->iRouteFactory = static function( string $path, Closure $endpoint, array $options, array $context ) use($handler) : IHTTPRoute {
+        /** @var class-string $class 
+            @var array<string> $options 
+            @var array<string,mixed> $context */        
+        return new DefaultHTTPRoute( $handler, $path, $endpoint, $options, $context );
+      };
     }
   }
   
@@ -68,7 +76,10 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
     if ( empty( $pattern ))
       throw new InvalidArgumentException( 'pattern must not be empty' );
     
-    $this->routes[$this->getBucket( $pattern )][$pattern][] = [$endpoint, $options, $context];
+    $bucket = $this->getBucket( $pattern );
+    
+    
+    $this->routes[$bucket][$pattern][] = [$endpoint, $options, $context];
     
     return $this;
   }
@@ -77,7 +88,7 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
    * @param IHTTPRouteRequest $request 
-   * @return IHTTPRoute[] Possible routes 
+   * @return array<IHTTPRoute> Possible routes 
    */
   public function getPossibleRoutes( IHTTPRouteRequest $request ) : array
   {
@@ -92,6 +103,7 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
       {
         foreach( $dataList as $data )
         {
+          
           $out[] = $this->createRoute( $path, $data[0], $data[1], $data[2] );
         }
       }

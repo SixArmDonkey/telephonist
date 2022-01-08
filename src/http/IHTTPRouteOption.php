@@ -22,7 +22,7 @@ interface IHTTPRouteOption
 {
   /**
    * Retrieve the command string(s) used to trigger this option
-   * @return string[]
+   * @return array<string>
    */
   public function getCommand() : array;
   

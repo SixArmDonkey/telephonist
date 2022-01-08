@@ -22,22 +22,35 @@ abstract class HTTPRoute implements IHTTPRoute
   public const ARGS_CAPTURED = 'args_captured';
   
   private IRouteHandler $routeHandler;
+  
+  
   private string $pattern;
+  
+  
+  /**
+   * @var array<string>
+   */
   private array $options;
+
+  
+  /**
+   * @var array<string,mixed>
+   */
   private array $context;
   
   
   /**
    * Get the resource to execute 
+   * @return class-string|object
    */
-  protected abstract function getResource() : mixed;
+  protected abstract function getResource() : string|object;
 
   
   /**
    * @param IRouteHandler $routeHandler The handler to use on execute() 
    * @param string $path Path pattern 
-   * @param array $options optional options 
-   * @param array $context context array 
+   * @param array<string> $options optional options 
+   * @param array<string,mixed> $context context array 
    * @throws InvalidArgumentException If path is empty 
    */
   public function __construct( IRouteHandler $routeHandler, string $path, array $options = [], array $context = [] )
@@ -67,7 +80,7 @@ abstract class HTTPRoute implements IHTTPRoute
   
   /**
    * Route context
-   * @return array
+   * @return array<string,mixed>
    */
   public final function getContext() : array
   {
@@ -77,7 +90,7 @@ abstract class HTTPRoute implements IHTTPRoute
   
   /**
    * Route options   
-   * @return array
+   * @return array<string>
    */
   public final function getOptions() : array
   {
@@ -132,7 +145,7 @@ abstract class HTTPRoute implements IHTTPRoute
   
   /**
    * Add arguments to the argument array based on stuff extracted from the route path
-   * @param array $matches preg_match() matches 
+   * @param array<string> $matches preg_match() matches 
    * @param array &$args Argument output
    * @return void
    */
@@ -141,17 +154,24 @@ abstract class HTTPRoute implements IHTTPRoute
     if ( isset( $matches[0] ))
       unset( $matches[0] );
     
-    $captured = ( isset( $this->context[self::ARGS_CAPTURED] )) ? $this->context[self::ARGS_CAPTURED] : [];
+    if ( !isset( $this->context[self::ARGS_CAPTURED] ) || !is_array( $this->context[self::ARGS_CAPTURED] ))
+      $this->context[self::ARGS_CAPTURED] = [];
     
-    if ( !is_array( $captured )) //..ehhhhh this should be a warning or something, you lazy bastard
-      $captured = [];
+    $captured = $this->context[self::ARGS_CAPTURED];
+    
     
     foreach( array_values( $matches ) as $k => $v )
     {
       if ( isset( $captured[$k] ) && !empty( $captured[$k] ) && is_string( $captured[$k] ))
+      {
+        /** @psalm-suppress MixedAssignment This is handled by castValue and is meant to be mixed **/
         $args[$captured[$k]] = $this->castValue( $v );
+      }
       else
+      {
+        /** @psalm-suppress MixedAssignment This is handled by castValue and is meant to be mixed **/
         $args[$k] = $this->castValue( $v );
+      }
     }
   }  
   

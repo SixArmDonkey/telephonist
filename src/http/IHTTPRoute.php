@@ -40,14 +40,14 @@ interface IHTTPRoute
   
   /**
    * Route context
-   * @return array
+   * @return array<string,mixed>
    */
   public function getContext() : array;
   
   
   /**
    * Route options   
-   * @return array
+   * @return array<string>
    */
   public function getOptions() : array;
 }

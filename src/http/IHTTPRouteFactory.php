@@ -21,7 +21,7 @@ interface IHTTPRouteFactory
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
    * @param IHTTPRouteRequest $request 
-   * @return IHTTPRoute[] Possible routes 
+   * @return array<IHTTPRoute> Possible routes 
    */
   public function getPossibleRoutes( IHTTPRouteRequest $request ) : array;
 }

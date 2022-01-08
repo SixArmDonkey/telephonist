@@ -100,12 +100,22 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
    */
   private IRouteConfig $config;
   
+  
   /**
-   * If the route config has been processed, then this will be an array instead of null
-   * @var array|null
+   * A map of [bucket => [path => [route config array]]
+   * @var array<int,array<array-key,array{0?:string, class?:string, 1?:string, method?:string, 2?string|array, options?:string|array, 3?:array<string,mixed>, context?:array<string,mixed>}>>
    */
-  private ?array $processedConfig = null;
-
+  private array $routeBuckets = [];
+  
+  
+  /**
+   * If the $routeBuckets array has been initialized
+   * @var bool
+   */
+  private bool $isInitialized = false;
+  
+  
+  
 
   /**
    * Creates an IHTTPRoute instance 
@@ -118,16 +128,13 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
    * @throws RouteConfigurationException
    */
   protected abstract function createRoute( string $path, string $class, string $method, array $options, array $context ) : IHTTPRoute;
-
-    
-  /**
-   * @param IRouteConfig $config This must return a processable configuration array as defined in the docblock for this class.
-   */
-  public function __construct( IRouteConfig $config ) 
+  
+  
+  public function __construct( IRouteConfig $config )
   {
     $this->config = $config;
   }
-  
+ 
   
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
@@ -136,25 +143,176 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
    */
   public function getPossibleRoutes( IHTTPRouteRequest $request ) : array
   {
-    $config = $this->getProcessedConfig();
+    $this->initialize();
+    
     
     $out = [];
     
     for ( $bucket = $this->getBucket( $request->getURI()); $bucket >= 0; $bucket-- )
     {
-      if ( !isset( $config[$bucket] ))
+      if ( !isset( $this->routeBuckets[$bucket] ))
         continue;
       
-      foreach( $config[$bucket] as $path => $dataList )
-      {
-        foreach( $dataList as $data )
+      
+      foreach( $this->routeBuckets[$bucket] as $path => $routeList )
+      {        
+        
+        foreach( $routeList as $data )
         {
+          assert( is_string( $path ));
+          assert( isset( $data[self::T_CLASS] ) && is_string( $data[self::T_CLASS] ));
+          assert( isset( $data[self::T_METHOD] ) && is_string( $data[self::T_METHOD] ));
+          assert( isset( $data[self::T_OPTIONS] ) && is_array( $data[self::T_OPTIONS] ));
+          assert( isset( $data[self::T_CONTEXT] ) && is_array( $data[self::T_CONTEXT] ));
+
           $out[] = $this->createRoute( $path, $data[self::T_CLASS], $data[self::T_METHOD], $data[self::T_OPTIONS], $data[self::T_CONTEXT] );
         }
       }
     } 
     
     return $out;      
+  } 
+  
+  
+  /**
+   * With IRouteConfig, flatten down the configuration and place into buckets based on number of path delimiters
+   * @return void
+   */
+  private function initialize() : void
+  {
+    if ( $this->isInitialized )
+      return;
+    
+    //..Process the configuration array 
+    $this->routeBuckets = $this->flattenConfigurationArray( '', $this->config->getConfig());
+    
+    $this->isInitialized = true;
+  }
+
+  
+
+  
+  /**
+   * 
+   * @param array $out
+   * @param string $path
+   * @param int $position
+   * @param array $data
+   * @throws RouteConfigurationException
+   */
+  private function mergeMulti( array &$out, string $path, int $position, array $data ) : void
+  {
+    if ( !$this->isRouteData( $data ))
+    {
+      throw new RouteConfigurationException( "Route data at " . $path . " position " 
+        . (string)$position . " must be route data" );  
+    }
+    
+    $bucket = $this->getBucket( $path );
+    
+    if ( !isset( $out[$bucket] ) || !is_array( $out[$bucket] ))
+      $out[$bucket] = [];
+    
+    if ( !isset( $out[$bucket][$path] ) || !is_array( $out[$bucket][$path] ))
+      $out[$bucket][$path] = [];
+    
+    $out[$bucket][$path][] = $this->prepareRouteData( $data );
+  }
+  
+  
+  /**
+   * 
+   * @param string $path
+   * @param string $pathPart
+   * @return string
+   */
+  private function mergePathPart( string $path, string $pathPart ) : string
+  {
+    if ( strlen( $pathPart ) > 0 )
+      return (( !empty( $path )) ? $path . self::PATH_DELIM : '' ) . $pathPart;
+    else
+      return $path;    
+  }
+
+
+  /**
+   * 
+   * @param array $out
+   * @param string $path
+   * @param array $config
+   * @return void
+   */
+  private function mergeFlattenConfigurationArray( array &$out, string $path, array $config ) : void
+  {
+    foreach( $this->flattenConfigurationArray( $path, $config ) as $bucket => $pConfig )
+    {
+      foreach( $pConfig as $pPath => $pData )
+      {
+        if ( !isset( $out[$bucket] ) || !is_array( $out[$bucket] ))
+          $out[$bucket] = [];
+        
+        $out[$bucket][$pPath] = $pData;
+      }
+    }
+  }
+  
+  
+  /**
+   * @param string $path The starting path
+   * @param array $config
+   * @return array<int,array<array-key,array{0?:string, class?:string, 1?:string, method?:string, 2?string|array, options?:string|array, 3?:array<string,mixed>, context?:array<string,mixed>}>>
+   */
+  private function flattenConfigurationArray( string $path, array $config ) : array
+  {
+    $out = [];
+    
+    foreach( $config as $pathPart => $data )
+    {
+      if ( !is_array( $data ))
+        throw new RouteConfigurationException( "route configuration at " . $path . self::PATH_DELIM . (string)$pathPart . ' must be an array' );
+      $this->processConfigEntry( $out, $path, $pathPart, $data );
+    }
+    
+    /** @var array<int,array<array-key,array{0?:string, class?:string, 1?:string, method?:string, 2?string|array, options?:string|array, 3?:array<string,mixed>, context?:array<string,mixed>}>> $out */
+    return $out;
+  }
+  
+  
+  /**
+   * 
+   * @param array $out
+   * @param string $path
+   * @param string|int $pathPart
+   * @param array $data
+   * @return void
+   */
+  private function processConfigEntry( array &$out, string $path, string|int $pathPart, array $data ) : void
+  {
+    if ( is_int( $pathPart ))
+    {
+      $this->mergeMulti( $out, $path, $pathPart, $data );
+    }
+    else
+    {
+      $curPath = $this->mergePathPart( $path, $pathPart );
+
+      if ( $this->isRouteData( $data ))
+      {      
+        $bucket = $this->getBucket( $curPath );
+        
+        if ( !isset( $out[$bucket] ) || !is_array( $out[$bucket] ))
+          $out[$bucket] = [];
+        
+        if ( !isset( $out[$bucket][$curPath] ) || !is_array( $out[$bucket][$curPath] ))
+          $out[$bucket][$curPath] = [];
+        
+        $out[$bucket][$curPath][] = $this->prepareRouteData( $data );
+      }
+      else
+      {
+        $this->mergeFlattenConfigurationArray( $out, $curPath, $data );
+      }
+    }    
   }
   
   
@@ -172,301 +330,110 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
     
     return substr_count( $path, self::PATH_DELIM );
   }
-
-
-  /**
-   * Figures out what type of variable something is.
-   * @param mixed $entry Something
-   * @return string What it is
-   * @final 
-   */
-  protected final function getGot( mixed $entry ) : string 
-  {
-    if ( is_array( $entry ))
-      return 'array (' . sizeof( $entry ) . ')';
-    else
-      return (( is_null( $entry )) ? 'null' : (( is_object( $entry )) ? get_class( $entry ) : gettype( $entry )));
-  }
   
   
   /**
-   * This takes the multi-dimensional config array and flattens the keys and converts them into patterns.
-   * 
-   * ie: 
-   * 
-   * [
-   *   'a' => [
-   *     'b' => [route data],
-   *     'c' => [
-   *       'd' => [route data],
-   *       '' => [route data]
-   *     ]
-   *   ]
-   * ]
-   * 
-   * would convert into:
-   * 
-   * [
-   *   'a/b => [[route data]],
-   *   'a/c/d => [[route data]],
-   *   'a/c => [[route data]]
-   * ]
-   * 
-   * 
-   * @return array
+   * @param array $data
+   * @return bool
    */
-  private function getProcessedConfig() : array
+  private function isRouteData( array $data ) : bool
   {
-    if ( !is_array( $this->processedConfig ))
+    foreach( $data as $k => $v )
     {
-      $this->processedConfig = [];
-      foreach( $this->processRouteConfigArray( '', $this->config->getConfig()) as $path => $data )
-      {
-        $bucket = $this->getBucket( $path );
-        if ( !isset( $this->processedConfig[$bucket] ))
-          $this->processedConfig[$bucket] = [];
-        
-        $this->processedConfig[$bucket][$path] = $data;
-      }
-    }
-    
-    return $this->processedConfig;
-  }
-  
-  
-  /**
-   * Processes a route configuration array entry.
-   * 
-   * @param string $path Path 
-   * @param array $config Config array 
-   * @return array Processed array 
-   * @throws RouteConfigurationException
-   * @todo Worst documentation ever
-   */
-  private function processRouteConfigArray( string $path, array $config ) : array
-  {
-    if ( empty( $config ))
-      return [];
-    
-    $out = [];
-    
-    //..Process multi-route configuration 
-    if ( substr( $path, -5 ) == self::MR_SUFFIX )
-    {
-      return $this->processMultiRouteConfig( $path, $config );
-    }
-    else if ( $this->isRouteData( $path, $config ))
-    {
-      return [$path => $config];
-    }
-
-    
-    //..Iterate over each config entry.
-    //  $entryPath is either a string or an integer.  If it is a string, then we will assume that this is part of the
-    //  path.  If it is an integer, then we will assume that it is part of the route information.
-    foreach( $config as $entryPath => $entry )
-    {
-      if ( !is_string( $entryPath ) || !is_array( $entry ))
-      {
-        throw new RouteConfigurationException( 'Potential misconfigured route at "' . $path . '". '
-          . ' Expected array with ' . sizeof( self::T_VALID ) . ' elements or an associative array with '
-          . '(and only with) one or more of the following keys: "' 
-          . implode( '","', self::T_VALID ) . '". ' 
-          . ' Got ' . json_encode( $config ));
-      }
-      else if ( !empty( $entryPath ))
-        $curPath = (( !empty( $path )) ? $path . self::PATH_DELIM : '' ) . $entryPath;
-      else
-        $curPath = $path;
+      if ( !is_array( $v ) && !is_string( $v ))
+        throw new RouteConfigurationException( 'Route configuration array values must always be an array or string.' );
       
-      
-      $res = $this->processRouteConfigArray( $curPath, $entry );
-      if ( empty( $res ))
-        continue;
-      
-      //..Ensure that each path is an array of route config data arrays
-      foreach( $res as $k => $v )
-      {
-        if ( !isset( $out[$k] ))
-          $out[$k] = [];
-        
-        if ( $this->isRouteData( $k, $v ))
-        {
-          //..Regular route config data array 
-          $out[$k][] = $v;
-        }
-        else //..$v is always an array
-        {
-          //..This is probably a multi-route
-          //..If so add each config array
-          foreach( $v as $v1 )
-          {
-            if ( $this->isRouteData( $k, $v1 ))
-              $out[$k][] = $v1;
-          }
-        }
-        //..This may omit things missed by the above
-      }
-    }
-    
-    return $out;
-  }
-  
-  
-  /**
-   * Route configuration handler for routes ending in --END.
-   * 
-   * This expects $config to be an array where each element is a valid route configuation data array.
-   * 
-   * @param string $path Route path
-   * @param array $config Configuration array 
-   * @return array Route data to be added to output array 
-   * @throws RouteConfigurationException
-   */
-  private function processMultiRouteConfig( string $path, array $config ) : array
-  {
-    $out = [];
-    $mrKey = substr( $path, 0, -5 );
-    $out[$mrKey] = [];
-
-    //..$entry should be an array of route configuration arrays 
-    foreach( $config as $k => $routeConfig )
-    {
-      if ( !ctype_digit((string)$k ))
-        throw new RouteConfigurationException( 'Routes ending with "--END" must not be equal to an associative array' );
-      else if ( !$this->isRouteData( $path, $routeConfig ))
-        throw new RouteConfigurationException( 'Multi-route configuration array at "' . $path . '" index "' . $k . '" does not appear to contain route configuration data.  '
-          . ' Expected array with ' . sizeof( self::T_VALID ) . ' elements or an associative array with '
-          . '(and only with) one or more of the following keys: "' 
-          . implode( '","', self::T_VALID ) . '". ' 
-          . ' got ' . json_encode( $routeConfig ));
-
-      $out[$mrKey][] = $routeConfig;
-    }    
-    
-    return $out;
-  }  
-  
-  
-  
-  /**
-   * Test if $entry contains route configuration data or if it is more nested routes.
-   * 
-   * A route configuration array will either be an array with exactly 4 elements: [string,string,string|array,array]
-   * or an map with one or more of the following entries:
-   * [
-   *   'class' => string,
-   *   'method' = string,
-   *   'options' => string|array,
-   *   'context' => array
-   * ]
-   * "class" is a required entry when not using numeric keys.
-   * 
-   * @param string $path Path
-   * @param array $entry Entry 
-   * @return bool will it blend?
-   */
-  private function isRouteData( string $path, array &$entry ) : bool
-  {
-    if ( empty( $entry ))
-      return false;
-    
-    $keysAllInteger = true;
-    
-    foreach( array_keys( $entry ) as $k )
-    {
-      //..If this key is not an integer, then we need to check if the key is one of the configuration keys       
-      if ( !ctype_digit((string)$k ))
-      {
-        $keysAllInteger = false;
-        
-        //..If this is a string key and it is not equal to one of the route config tokens, then this is not route data.
-        if ( !in_array( $k, self::T_VALID ))
-        {
-          return false;
-        }
-        
-        //..This key equals one of the route tokens, and MAY be route data.
-      }
-      else if ( !$keysAllInteger )
-      {
-        //..If the entry array contains mixed string and integer keys, this is not route configuration data 
-        //..This one may be better as an exception
+      if ( !$this->isNamedOrPositionalRouteDataValueValid( $k, $v ))
         return false;
-      }      
     }
     
-    
-    //..Either all of the keys are strings and are equal to one of the tokens, or all of the keys are integers.
-    
-    
-    if ( $keysAllInteger && sizeof( $entry ) != sizeof( self::T_VALID ))
+    return true;
+  }
+  
+  
+  /**
+   * For some array key/value pair where they key is an integer, test if the value is a string or array 
+   * and that the value type matches the appropriate position.  (see T_VALID)
+   * @param int|string $k array key 
+   * @param array|string $v array value 
+   * @return boolean
+   */
+  private function isNamedOrPositionalRouteDataValueValid( int|string $k, array|string $v ) : bool
+  {
+    switch( $k )
     {
-      //..If all keys are integers, the length of $entry must be equal to sizeof(T_VALID)
-      return false;
-    }
+      //..Class
+      case 0: //..fall through
+      case self::T_CLASS:
+        return is_string( $v );
 
-    //..We need to test that each key exists and is of the right type
-    //..This is 2 passes because int keys are converted to strings.
-    foreach( $entry as $k => $v )
+      //..Method
+      case 1: //..fall through
+      case self::T_METHOD:
+        return is_string( $v );
+        
+      //..Options
+      case 2: //..fall through
+      case self::T_OPTIONS:
+        return true;  //..This is always an array or a a string.
+
+      //..Context
+      case 3: //..fall through
+      case self::T_CONTEXT:
+        return is_array( $v );
+    }
+    
+    //..Invalid
+    return false;
+  }
+  
+  
+  /**
+   * 
+   * @param array<array-key,mixed> $data 
+   * @return array<string,string|array> prepared route data 
+   */
+  private function prepareRouteData( array $data )
+  {
+    $out = [];
+    
+    foreach( $data as $k => $v )
     {
       switch( $k )
       {
-        case 0; //..fall through
-          $entry[self::T_CLASS] = $v;
-          unset( $entry[$k] );
-          
+        //..Class
+        case 0: //..fall through
         case self::T_CLASS:
-          if ( empty( $v ) || !is_string( $v ))
-            throw new RouteConfigurationException( 'Value at Path: "' . $path . '" and Entry: "' . $k . '" must be a string' );
+          assert( is_string( $v ));
+          $out[self::T_CLASS] = $v;
         break;
 
-          
+        //..Method
         case 1: //..fall through
-          $entry[self::T_METHOD] = $v;
-          unset( $entry[$k] );
-          
         case self::T_METHOD:
-          if ( !is_string( $v ))
-            throw new RouteConfigurationException( 'Value at Path: "' . $path . '" and Entry: "' . $k . '" must be a string' );
+          assert( is_string( $v ));
+          $out[self::T_METHOD] = $v;
         break;
 
-        
+        //..Options
         case 2: //..fall through
-          $entry[self::T_OPTIONS] = $v;
-          unset( $entry[$k] );
-            
         case self::T_OPTIONS:
-          if ( !is_string( $v ) && !is_array( $v ))
-            throw new RouteConfigurationException( 'Value at Path: "' . $path . '" and Entry: "' . $k . '" must be a string or array' );
-          
+          assert( is_string( $v ) || is_array( $v ));
           if ( is_string( $v ))
-          {
-            if ( strpos( $v, ',' ) !== false )
-              $entry[self::T_OPTIONS] = explode( ',', $v );
-            else
-              $entry[self::T_OPTIONS] = str_split( $v, 1 );
-          }
+            $out[self::T_OPTIONS] = explode( ',', $v );
+          else
+            $out[self::T_OPTIONS] = $v;
         break;
 
-        
+        //..Context
         case 3: //..fall through
-          $entry[self::T_CONTEXT] = $v;
-          unset( $entry[$k] );
-          
         case self::T_CONTEXT:
-          if ( !is_array( $v ))
-            throw new RouteConfigurationException( 'Value at Path: "' . $path . '" and Entry: "' . $k . '" must be an array' );
+          assert( is_array( $v ));
+          $out[self::T_CONTEXT] = $v;
         break;
-
-        //..Not route configuration 
-        //..If the previous section works, this should be unreachable.
-        default:
-          return false;
       }
     }
     
-    //..This is valid route configuration data 
-    return true;
-  }
+    return $out;
+  }  
 }

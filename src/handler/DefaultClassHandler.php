@@ -16,9 +16,12 @@ use buffalokiwi\telephonist\RouteConfigurationException;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
+use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionUnionType;
 use function ctype_digit;
+use function json_encode;
 
 
 /**
@@ -69,7 +72,7 @@ class DefaultClassHandler implements IRouteHandler
   
   /**
    * 
-   * @param mixed $resource The fully qualified class name 
+   * @param class-string|object $resource The fully qualified class name 
    * @param string $identifier The method name 
    * @param array $args Arguments to be passed to the method endpoint.  If this is an associative array. 
    * named arguments will be used.
@@ -98,58 +101,15 @@ class DefaultClassHandler implements IRouteHandler
    *         class exists, then the instantiateClass() method is called.  The result of this method must be an instance
    *         of the supplied type.
    */
-  public function execute( mixed $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
+  public function execute( string|object $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
   {
-    if ( empty( $resource ))
-      throw new RouteConfigurationException( 'execute() arg[0] $resoource|$resource must be a string and must not be empty' );
-    else if ( empty( $identifier ))
-      throw new RouteConfigurationException( 'Method endpoint for class ' . $resource . ' must not be empty' );
-    else if ( !class_exists( $resource ))
-      throw new RouteConfigurationException( "Class: " . $resource . " does not exist" );
+    if ( empty( $identifier ))
+      throw new RouteConfigurationException( 'Method endpoint for ' . (( is_string( $resource )) ? $resource : get_class( $resource )) . ' must not be empty' );
     
+    if ( is_string( $resource ))
+      return $this->executeClassString( $resource, $identifier, $args, $context );
     
-    $c = new ReflectionClass( $resource );
-    
-    try {
-      $m = $c->getMethod( $identifier );
-    } catch( ReflectionException ) {
-      $m = null;
-    }
-    
-    if ( empty( $m ))
-    {
-      throw new RouteConfigurationException( 'Method "' . $identifier . '" is not a valid method of class '
-        . '"' . $resource . '".' );
-    }
-
-    //..Get class constructor arguments    
-    $cArgs = $this->reflectionParametersToArgumentsArray(
-      $this->getArgumentArray( self::C_ARGS_CLASS, $context ),
-      ...($c->getConstructor()?->getParameters() ?? [])
-    );
-    
-    //..Supplied method arguments merged with method arguments from context array and filtered 
-    
-    foreach( $this->getArgumentArray( self::C_ARGS_METHOD, $context ) as $k => $v )
-    {
-      $args[$k] = $v;
-    }
-    
-    
-    
-    $mArgs = $this->reflectionParametersToArgumentsArray( 
-      $args,
-      ...$m->getParameters()
-    );
-        
-    //..If the method is static, then we execute and return 
-    if ( $m->isStatic())
-    {
-      return $this->executeStatic( $resource, $identifier, $cArgs, $mArgs );
-    }
-    
-    //..Execute the method 
-    return (new $resource( ...$cArgs ))->$identifier( ...$mArgs );
+    return $this->executeObject( $resource, $identifier, $args, $context );
   }
   
   
@@ -162,15 +122,120 @@ class DefaultClassHandler implements IRouteHandler
    */
   protected function getInstance( string $type ) : ?object
   {    
-    if ( $type != self::T_NULL
-      && class_exists( $type ) 
-      && empty(( new ReflectionClass( $type ))->getConstructor()?->getParameters()))
+    if ( $type == self::T_NULL || !class_exists( $type ))
+      return null;
+    
+    $c = new ReflectionClass( $type );
+    
+    if ( sizeof( $c->getConstructor()?->getParameters() ?? [] ) == 0 )
     {
-      return new $type();
+      return $c->newInstance();
     }
     
     return null;
-  }  
+  }
+  
+  
+  /**
+   * Invokes a method on an instance of some class object.
+   * @param object $resource Class instance 
+   * @param string $identifier Method name 
+   * @param array $args Argument array 
+   * @param array $context Route context array 
+   * @return mixed route result 
+   * @throws RouteConfigurationException
+   */
+  private function executeObject( object $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
+  {
+    $m = new ReflectionMethod( $resource, $identifier );
+    
+    if ( $m->isStatic())
+    {
+      throw new RouteConfigurationException( 'Cannot call static method on instantiated object of type ' 
+        . get_class( $resource ));
+    }
+    
+    return $m->invoke( $resource, ...$this->prepareMethodArgs( $m, $args, $context ));
+  }
+  
+  
+  /**
+   * Instantiates a class defined by $resource and invokes method $identifier with arguments $args 
+   * @param string $resource class name
+   * @param string $identifier method name 
+   * @param array $args argument list  
+   * @param array $context route context 
+   * @return mixed route response 
+   * @throws RouteConfigurationException
+   */
+  private function executeClassString( string $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
+  {
+    if ( !class_exists( $resource ))
+      throw new RouteConfigurationException( 'Supplied class string: "' . $resource . '" is not an existing class' );
+    
+    $c = new ReflectionClass( $resource );
+    
+    try {
+      $m = $c->getMethod( $identifier );
+    } catch( ReflectionException ) {
+      $m = null;
+    }
+    
+    if ( is_null( $m ))
+    {
+      throw new RouteConfigurationException( 'Method "' . $identifier . '" is not a valid method of class '
+        . '"' . $resource . '".' );
+    }
+
+    //..Get class constructor arguments    
+    $cArgs = $this->reflectionParametersToArgumentsArray(
+      $this->getArgumentArray( self::C_ARGS_CLASS, $context ),
+      ...($c->getConstructor()?->getParameters() ?? [])
+    );
+    
+    //..Supplied method arguments merged with method arguments from context array and filtered 
+    $mArgs = $this->prepareMethodArgs( $m, $args, $context );
+ 
+    
+    if ( !$m->isStatic())
+    {
+      //..Execute the method 
+      return $m->invoke( $c->newInstance( ...$cArgs ), ...$mArgs );
+    }
+    
+    
+    //..This is a static method 
+    if ( sizeof( $cArgs ) > 0 )
+    {
+      throw new RouteConfigurationException( 'Route endpoint is static method "' . $m->getName() 
+        . '" of class "' . $c->getName()
+        . '", but class constructor arguments have been defined in the route '
+        . 'context array.  Class constructors are never called when routing to a static method, and your '
+        . 'intention may be unclear.  Either remove the class arguments, remove the static designation, or move the '
+        . 'static method to a new static class with no constructor' );
+    }
+        
+    return $m->invoke( null, ...$mArgs );
+  }
+  
+   
+  /**
+   * Given a reflection method and a list of arguments, 
+   * figure out what arguments we're going to pass to the method when it is invoked.
+   * 
+   * @param ReflectionMethod $m Method
+   * @param array $args Argument array
+   * @param array $context route context (This may contain an array key self::C_ARGS_METHOD, which can contain 
+   * more arguments to pass to the method)  
+   * @return array
+   */
+  private function prepareMethodArgs( ReflectionMethod $m, array $args, array $context ) : array
+  {    
+    return $this->reflectionParametersToArgumentsArray( 
+      $args + $this->getArgumentArray( self::C_ARGS_METHOD, $context ),
+      ...$m->getParameters()
+    );           
+  }
   
   
   /**
@@ -222,7 +287,7 @@ class DefaultClassHandler implements IRouteHandler
    * 
    * @param array $args Method arguments 
    * @param ReflectionParameter $params Method argument meta data 
-   * @return array An array to use as method argument values when executing the method 
+   * @return array<array-key|string,mixed|null|object> An array to use as method argument values when executing the method 
    */
   private function reflectionParametersToArgumentsArray( array $args, ReflectionParameter ...$params ) : array
   {
@@ -231,12 +296,11 @@ class DefaultClassHandler implements IRouteHandler
     else if ( empty( $params ))
       return [];
     
-    
     //..argument name to argument index map 
     //..If each entry was found
     //..Resulting argument array 
     list( $nameToArgumentIndexMap, $foundArguments, $out ) = $this->createArgumentMaps( $args, ...$params );
-   
+    
     //..Check if each argument was found in $args, and if not check for a default value and assign to $out if
     //  available.  If none of the above, throw a RouteConfigurationException.
     $notFound = [];
@@ -246,9 +310,14 @@ class DefaultClassHandler implements IRouteHandler
       
       /* @var ReflectionParameter $param */
       
+      assert( is_string( $name ));
+      assert( array_key_exists( $name, $nameToArgumentIndexMap ));
+      
       $nk = $nameToArgumentIndexMap[$name];
       
       $param = $params[$nk];
+      
+      /* @var $param ReflectionParameter */
       
       //..Get the object types 
       $types = $this->getObjectParameterTypes( $name, $param );
@@ -271,7 +340,9 @@ class DefaultClassHandler implements IRouteHandler
       }
       else if ( !$found && $param->isDefaultValueAvailable())
       {
-        //..Assign default value if available
+        //..Assign default value if available        
+        /** @psalm-suppress MixedAssignment ReflectionParameter::getDefaultValue() returns mixed and we want that */
+        //..We are going to depend on php to handle type checking when we invoke things
         $out[$nameToArgumentIndexMap[$name]] = $param->getDefaultValue();
       } 
       else if ( !$found )
@@ -300,11 +371,12 @@ class DefaultClassHandler implements IRouteHandler
    * 2) [parameter name => argument was passed]
    * 3) [argument position => argument value]
    * 
+   * @param array<array-key,mixed> $args 
    * @param ReflectionParameter $params 
-   * @return array
+   * @return array{0: array<string,array-key>, 1: array<array-key,bool>, 2: array<array-key,mixed|null|object>}
    */
   private function createArgumentMaps( array $args, ReflectionParameter ...$params ) : array
-  {
+  {    
     //..argument name to argument index map 
     $nameToArgumentIndexMap = [];
     
@@ -329,19 +401,20 @@ class DefaultClassHandler implements IRouteHandler
     //..Arguments with string keys are mapped to an integer value via $nameToArgumentIndexMap and mapped to that 
     //  result in the output array
     //..If any key of $args is an integer and not a key of $out or if a string and not a key of $nameToArgumentIndexMap
-    //  a RouteConfigurationException is thrown 
+    //  a RouteConfigurationException is thrown      
     
-    
+    /** @psalm-suppress MixedAssignment This is a class loader.  Therefore we need mixed argument values */
+    //..We are going to depend on php to handle type checking when we invoke things
     foreach( $args as $k => $v )
-    {
+    {      
       if ( ctype_digit((string)$k ))
       {
-        $this->throwValueExceptionWhenValueIsNull( $k, $out[$k] );
+        $this->throwValueExceptionWhenValueIsNull((int)$k, $out[$k] );
         
         $out[$k] = $v;
         $foundArguments[$params[$k]->getName()] = true;
       }
-      else if ( isset( $nameToArgumentIndexMap[$k] ))
+      else if ( is_string( $k ) && isset( $nameToArgumentIndexMap[$k] ))
       {
         $this->throwValueExceptionWhenValueIsNull( $k, $out[$nameToArgumentIndexMap[$k]] );
         
@@ -350,7 +423,6 @@ class DefaultClassHandler implements IRouteHandler
       }
       else
       {
-        echo json_encode( $nameToArgumentIndexMap );
         throw new RouteConfigurationException( 'Parameter "' . $k 
           . '" is not a valid argument.  Valid arguments are: "' 
           . implode( '","', array_keys( $nameToArgumentIndexMap )) . '". ' );
@@ -361,6 +433,13 @@ class DefaultClassHandler implements IRouteHandler
   }
   
   
+  /**
+   * 
+   * @param int|string $k
+   * @param mixed $value
+   * @return void
+   * @throws RouteConfigurationException
+   */
   private function throwValueExceptionWhenValueIsNull( int|string $k, mixed $value ) : void
   {
     if ( is_null( $value ))
@@ -378,7 +457,7 @@ class DefaultClassHandler implements IRouteHandler
    * This returns an empty string if the parameter types are scalar, array 
    * @param string $name
    * @param ReflectionParameter $param
-   * @return array
+   * @return array<string>
    * @throws UntypedArgumentException
    */
   private function getObjectParameterTypes( string $name, ReflectionParameter $param ) : array
@@ -386,63 +465,57 @@ class DefaultClassHandler implements IRouteHandler
     /* @var ReflectionType $type */
     $type = $param->getType();
     if ( $type == null )
+    {
       throw new UntypedArgumentException( $name );
-
-    $types = [];
-
-    if ( $type instanceof ReflectionUnionType )
-    {
-      foreach( $type->getTypes() as $t )
-      {        
-        if ( in_array( $t->getName(), self::T_SCALAR ) || $t->getName() == self::T_ARRAY )
-          continue;
-
-        $types[] = $t->getName();
-      }
     }
-    else if ( $type instanceof \ReflectionNamedType )
+    else if ( $type instanceof ReflectionUnionType )
     {
-      //..Psalm is a bit retarded at times.  It barks at $type::getName() not being a method.
-      //..It is, and $type is an instance of ReflectioNamedType 
-      if ( !in_array( $type->getName(), self::T_SCALAR ) && $type->getName() != self::T_ARRAY )
-        $types[] = $type->getName();
+      return $this->getNamesForUnionType( $type );
+    }
+    else if ( $type instanceof ReflectionNamedType )
+    {
+      $names = [];
+      $this->addNameForNamedTypeToArray( $type, $names );
+      return $names;
     }
     else
       throw new \Exception( '$type must be an instance of ReflectionUnionType or ReflectionNamedType' );
-    
-    return $types;
   }
   
-
+  
   /**
-   * Execute a static method 
-   * @param string $class
-   * @param string $method
-   * @param array $cArgs
-   * @param array $mArgs
-   * @return mixed
-   * @throws RouteConfigurationException
-   * @psalm-suppress InvalidStringClass
+   * 
+   * @param ReflectionUnionType $type
+   * @return array<string>
    */
-  private function executeStatic( string $class, string $method, array $cArgs, array $mArgs ) : mixed 
+  private function getNamesForUnionType( ReflectionUnionType $type ) : array
   {
-    if ( empty( $class ))
-      throw new InvalidArgumentException( 'class must not be empty' );
-    else if ( empty( $method ))
-      throw new InvalidArgumentException( 'method must not be empty' );
-    else if ( !empty( $cArgs ))
-    {
-      throw new RouteConfigurationException( 'Route endpoint is static method "' . $method 
-        . '" of class "' . $class . '", but class constructor arguments have been defined in the route '
-        . 'context array.  Class constructors are never called when routing to a static method, and your '
-        . 'intention may be unclear.  Either remove the class arguments, remove the static designation, or move the '
-        . 'static method to a new static class with no constructor' );
+    $names = [];
+    
+    foreach( $type->getTypes() as $t )
+    {        
+      $this->addNameForNamedTypeToArray( $t, $names );
     }
-      
-    //..Psalm doesn't like class strings
-    //..This is fine.  $resource/$class is fully tested ahead of this method call.
-    return $class::$method( ...$mArgs );    
+    
+    return $names;
   }
+  
+  
+  /**
+   * 
+   * @param ReflectionNamedType $type
+   * @param array<string> &$names
+   * @return void
+   */
+  private function addNameForNamedTypeToArray( ReflectionNamedType $type, array &$names ) : void
+  {
+    if ( !in_array( $type->getName(), self::T_SCALAR ) && $type->getName() != self::T_ARRAY )
+      $names[] = $type->getName();
+  }
+  
+  
+
+  
   
   
   

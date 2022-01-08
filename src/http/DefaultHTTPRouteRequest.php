@@ -29,7 +29,7 @@ class DefaultHTTPRouteRequest implements IHTTPRouteRequest
   private array $server;
   
   /**
-   * @param array &$server $_SERVER 
+   * @param array<string,string> &$server $_SERVER 
    */
   public function __construct( array $server )
   {
@@ -46,6 +46,12 @@ class DefaultHTTPRouteRequest implements IHTTPRouteRequest
    */
   public function getURI() : string
   {
+    if ( !isset( $this->server[self::REQUEST_URI] )
+      || !is_string( $this->server[self::REQUEST_URI] ))
+    {
+      throw new \Exception( 'Server array is missing request uri.  This does not appear to be a web request' );
+    }
+    
     return $this->server[self::REQUEST_URI];
   }
   
@@ -68,8 +74,11 @@ class DefaultHTTPRouteRequest implements IHTTPRouteRequest
    */
   public function getHeader( string $name ) : string
   {
-    if ( isset( $this->server[$name] ))
+    if ( isset( $this->server[$name] )
+      && is_string( $this->server[$name] ))
+    {
       return $this->server[$name];
+    }
     
     return '';
   }

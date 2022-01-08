@@ -22,14 +22,15 @@ class DefaultHTTPRoute extends HTTPRoute implements IHTTPRoute
   private Closure $endpoint;
 
   
+  
   /**
+   * 
    * @param IRouteHandler $routeHandler The handler to use on execute() 
    * @param string $path Path pattern 
-   * @param string $class Class or file name 
-   * @param string $method method when class is a class 
-   * @param array $options optional options 
-   * @param array $context context array 
-   * @throws InvalidArgumentException If path or class is empty 
+   * @param Closure $endpoint
+   * @param array<string> $options optional options 
+   * @param array<string,mixed> $context context array 
+   * @throws InvalidArgumentException If path is empty 
    */
   public function __construct( IRouteHandler $routeHandler, string $path, Closure $endpoint, 
     array $options = [], array $context = [] )
@@ -42,8 +43,9 @@ class DefaultHTTPRoute extends HTTPRoute implements IHTTPRoute
   
   /**
    * Get the resource to execute 
+   * @return class-string|object
    */
-  protected function getResource() : mixed
+  protected function getResource() : string|object
   {
     return $this->endpoint;
   }

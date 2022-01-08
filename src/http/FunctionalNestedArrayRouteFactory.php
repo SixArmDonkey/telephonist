@@ -42,8 +42,15 @@ class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
     else
     {
       $handler = new DefaultClassHandler();
-      $this->iRouteFactory = fn( string $path, string $class, string $method, array $options, array $context ) : IHTTPRoute
-        => new ClassHTTPRoute( $handler, $path, $class, $method, $options, $context );
+      
+      
+      
+      $this->iRouteFactory = static function( string $path, string $class, string $method, array $options, array $context ) use($handler) : IHTTPRoute {
+        /** @var class-string $class 
+            @var array<string> $options 
+            @var array<string,mixed> $context */
+        return new ClassHTTPRoute( $handler, $path, $class, $method, $options, $context );
+      };
     }
   }
   
@@ -66,8 +73,7 @@ class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
     if ( !( $res instanceof IHTTPRoute ))
     {
       throw new RouteConfigurationException( 'Closure $iRouteFactory passed to ' . static::class 
-        . '::__construct() must return an instance of ' . IHTTPRoute::class 
-        . '. Got ' . $this->getGot( $this->iRouteFactory ));
+        . '::__construct() must return an instance of ' . IHTTPRoute::class  );
     }
     
     return $res;

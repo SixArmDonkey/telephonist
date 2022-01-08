@@ -19,15 +19,20 @@ use stdClass;
 
 
 
-class ValidTestClass 
+class ValidStaticTestClass 
 {
   public static function staticVoid() : void {}
   public static function staticString() : string { return 'staticString'; }
   public static function staticStringArg1( string $arg ) : string { return $arg; }
   public static function staticIntArg1( int $arg ) : int { return $arg; }
   public static function staticMultiArg( string $arg1, int $arg2, string $arg3 ) { return $arg1 . (string)$arg2 . $arg3; }
-  public static function staticClassArg( stdClass $arg1 ) { return $arg1; }
-  
+  public static function staticClassArg( stdClass $arg1 ) { return $arg1; }  
+}
+
+
+
+class ValidTestClass 
+{
   public function instanceString() : string { return 'instanceString'; }
   public function instanceStringArg1( string $arg ) : string { return $arg; }
   public function instaceIntArg1( int $arg ) : int { return $arg; }
@@ -104,49 +109,49 @@ class DefaultClassHandlerTest extends TestCase
   
   public function testExecuteMethodStaticRoute() : void
   {
-    $this->assertSame( 'staticString', $this->instance->execute( ValidTestClass::class, 'staticString', [], [] ));
+    $this->assertSame( 'staticString', $this->instance->execute( ValidStaticTestClass::class, 'staticString', [], [] ));
   }
   
   
   public function testExecuteStaticStringArgument() : void
   {
-    $this->assertSame( 'staticStringArg1', $this->instance->execute( ValidTestClass::class, 'staticStringArg1', ['staticStringArg1'] ));
+    $this->assertSame( 'staticStringArg1', $this->instance->execute( ValidStaticTestClass::class, 'staticStringArg1', ['staticStringArg1'] ));
     
     //..Test named
-    $this->assertSame( 'staticStringArg1', $this->instance->execute( ValidTestClass::class, 'staticStringArg1', [ 'arg' => 'staticStringArg1'] ));
+    $this->assertSame( 'staticStringArg1', $this->instance->execute( ValidStaticTestClass::class, 'staticStringArg1', [ 'arg' => 'staticStringArg1'] ));
   }
   
   
   public function testExecuteStaticIntArgument() : void
   {
-    $this->assertSame( 13, $this->instance->execute( ValidTestClass::class, 'staticIntArg1', [13] ));
+    $this->assertSame( 13, $this->instance->execute( ValidStaticTestClass::class, 'staticIntArg1', [13] ));
     
     //..Test named
-    $this->assertSame( 13, $this->instance->execute( ValidTestClass::class, 'staticIntArg1', ['arg' => 13] ));
+    $this->assertSame( 13, $this->instance->execute( ValidStaticTestClass::class, 'staticIntArg1', ['arg' => 13] ));
   }
   
   
   public function testExecuteMultipleArgsStatic() : void
   {
-    $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidTestClass::class, 'staticMultiArg', ['arg1', 357, 'arg2'] ));
+    $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidStaticTestClass::class, 'staticMultiArg', ['arg1', 357, 'arg2'] ));
     
     //..named
-    $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidTestClass::class, 'staticMultiArg', ['arg1' => 'arg1', 'arg2' => 357, 'arg3' => 'arg2'] ));
+    $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidStaticTestClass::class, 'staticMultiArg', ['arg1' => 'arg1', 'arg2' => 357, 'arg3' => 'arg2'] ));
     
     //..Positional mixed with named
-    $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidTestClass::class, 'staticMultiArg', [1 => 357, 'arg1' => 'arg1', 'arg3' => 'arg2'] ));
+    $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidStaticTestClass::class, 'staticMultiArg', [1 => 357, 'arg1' => 'arg1', 'arg3' => 'arg2'] ));
     
     //..Invalid positional mixed with named
     try {
       //..arg1 exists at position zero.  Therefore, supplying both zero and arg1 must throw an exception
-      $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidTestClass::class, 'staticMultiArg', [0 => 357, 'arg1' => 'arg1', 'arg3' => 'arg2'] ));
+      $this->assertSame( 'arg1357arg2', $this->instance->execute( ValidStaticTestClass::class, 'staticMultiArg', [0 => 357, 'arg1' => 'arg1', 'arg3' => 'arg2'] ));
       $this->fail( 'When positional arguments are mixed with named arguments, each referenced argument must be unique or a RouteConfigurationEception must be thrown.' );
     } catch( RouteConfigurationException ) {
       //..Expected
     }
     
     //..Test creating an instance of a class
-    $this->assertInstanceOf( stdClass::class, $this->instance->execute( ValidTestClass::class, 'staticClassArg' ));    
+    $this->assertInstanceOf( stdClass::class, $this->instance->execute( ValidStaticTestClass::class, 'staticClassArg' ));    
   }
   
 

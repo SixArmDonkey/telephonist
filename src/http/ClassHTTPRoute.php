@@ -17,6 +17,10 @@ use InvalidArgumentException;
 
 class ClassHTTPRoute extends HTTPRoute implements IHTTPRoute
 {
+  /**
+   * 
+   * @var class-string
+   */
   private string $class;
   private string $method;
   
@@ -24,10 +28,10 @@ class ClassHTTPRoute extends HTTPRoute implements IHTTPRoute
   /**
    * @param IRouteHandler $routeHandler The handler to use on execute() 
    * @param string $path Path pattern 
-   * @param string $class Class or file name 
+   * @param class-string $class Class or file name 
    * @param string $method method when class is a class 
-   * @param array $options optional options 
-   * @param array $context context array 
+   * @param array<string> $options optional options 
+   * @param array<string,mixed> $context context array 
    * @throws InvalidArgumentException If path or class is empty 
    */
   public function __construct( IRouteHandler $routeHandler, string $path, string $class, 
@@ -35,7 +39,7 @@ class ClassHTTPRoute extends HTTPRoute implements IHTTPRoute
   {
     parent::__construct( $routeHandler, $path, $options, $context );
     
-    if ( empty( $class ))
+    if ( strlen( $class ) == 0 )
       throw new InvalidArgumentException( 'class for path "' . $path . '" must not be empty' );
     
     $this->class = $class;
@@ -44,8 +48,9 @@ class ClassHTTPRoute extends HTTPRoute implements IHTTPRoute
   
   /**
    * Get the class 
+   * @return class-string|object
    */
-  protected function getResource() : mixed
+  protected function getResource() : string|object
   {
     return $this->class;
   }
