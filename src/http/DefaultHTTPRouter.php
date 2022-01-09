@@ -18,10 +18,10 @@ use buffalokiwi\telephonist\RouteNotFoundException;
 
 /**
  * Default router implementation
+ * Pass a request to route() and receive a result to send to the client.
  * 
- * 
- * 
- * 
+ * The result of route() can be anything.  A string, object, whatever you want.  The router simply connects 
+ * point A to point B.
  */
 class DefaultHTTPRouter implements IHTTPRouter
 {
@@ -84,16 +84,9 @@ class DefaultHTTPRouter implements IHTTPRouter
   {
     foreach( $route->getOptions() as $opt )
     {
-      $hasOption = $this->options->hasOption( $opt );
-      
-      if ( $hasOption )
+      if ( $this->options->hasOption( $opt ))
       {
-        //..The option is enabled in the router.  
-        foreach( $this->options->getOptions( $opt ) as $o )
-        {
-          if ( !$o->validate( $request, $route ))
-            return false;
-        }
+        return $this->isOptionValid( $request, $route, $opt );
       }
       else if ( $this->strict )
       {
@@ -103,5 +96,25 @@ class DefaultHTTPRouter implements IHTTPRouter
     }
     
     return true;
+  }
+  
+  
+  /**
+   * Ensure that the supplied option validates if it is connected to this route
+   * @param IHTTPRouteRequest $request
+   * @param IHTTPRoute $route
+   * @param string $opt
+   * @return bool
+   */
+  private function isOptionValid( IHTTPRouteRequest $request, IHTTPRoute $route, string $opt ) : bool
+  {
+    //..The option is enabled in the router.  
+    foreach( $this->options->getOptions( $opt ) as $o )
+    {
+      if ( !$o->validate( $request, $route ))
+        return false;
+    }
+    
+    return true;    
   }
 }

@@ -18,14 +18,25 @@ use buffalokiwi\telephonist\http\IHTTPRouteRequest;
 use InvalidArgumentException;
 
 
+/**
+ * Used to attach multiple route factories to a single router
+ * When getPossibleRoutes() is called, the same method is called on each each factory 
+ * in the order it was supplied.
+ */
 class HTTPRouteFactoryGroup implements IHTTPRouteFactory
 {
   /**
+   * A list of factories.
    * 
    * @var array<IHTTPRouteFactory>
    */
   private array $factoryList;
   
+  
+  /**
+   * @param IHTTPRouteFactory $factoryList Factories to use 
+   * @throws InvalidArgumentException At least one factory is required 
+   */
   public function __construct( IHTTPRouteFactory ...$factoryList )
   {
     if ( empty( $factoryList ))

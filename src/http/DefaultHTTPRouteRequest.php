@@ -17,6 +17,11 @@ use InvalidArgumentException;
 
 /**
  * Default route request implementation.
+ * 
+ * It's easy enough to replace this with one that pulls from whatever psr implementation.  
+ * I'm not including the dependency.
+ * 
+ * Pass $_SERVER to constructor for basic fun time.
  */
 class DefaultHTTPRouteRequest implements IHTTPRouteRequest
 {

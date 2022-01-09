@@ -25,13 +25,9 @@ use function json_encode;
 
 
 /**
- * Invokes a method on a newly instantiated class as defined by arguments passed to execute().
+ * Given some route data, this will instantiate and invoke some method.
  * 
- * This needs some extra testing for union types like:
  * 
- * string|object
- * string|SomeClassName
- * string|SomeClassName|null
  */
 class DefaultClassHandler implements IRouteHandler
 {
@@ -309,7 +305,6 @@ class DefaultClassHandler implements IRouteHandler
       //..Get the reflection parameter 
       
       /* @var ReflectionParameter $param */
-      
       assert( is_string( $name ));
       assert( array_key_exists( $name, $nameToArgumentIndexMap ));
       
@@ -479,7 +474,10 @@ class DefaultClassHandler implements IRouteHandler
       return $names;
     }
     else
-      throw new \Exception( '$type must be an instance of ReflectionUnionType or ReflectionNamedType' );
+    {
+      throw new UntypedArgumentException( $name 
+        . ' type must be an instance of ReflectionUnionType or ReflectionNamedType' );
+    }
   }
   
   

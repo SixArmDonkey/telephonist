@@ -14,7 +14,6 @@ namespace buffalokiwi\telephonist\http;
 
 use buffalokiwi\telephonist\IRouteConfig;
 use buffalokiwi\telephonist\RouteConfigurationException;
-use function ctype_digit;
 
 
 /**
@@ -37,6 +36,7 @@ use function ctype_digit;
  *       ['class_name', 'method_name', ['method' => 'get'], ['context_array']],
  *       ['class_name', 'method_name', ['method' => 'post'], ['context_array']]
  *     ],
+ *     '' => ['class_name', 'method_name', ['method' => 'get'], ['context_array']]
  *   ],
  *
  *   'path6' => [
@@ -44,6 +44,19 @@ use function ctype_digit;
  *     '' => ['class_name', 'method_name', ['opt1','opt2'], ['context_array']]
  *   ]
  * ]
+ * 
+ * 
+ * Each "level" is another section of the path and is concatenated using the path delimiter to form a 
+ * route pattern.  For example, after processing the above, we get:
+ *
+ * [
+ * ...
+ * path5/(\d+) => [[ route data ],[ route data ]],
+ * path5 => [ route data ]
+ * ...
+ * ]
+ * 
+ * 
  */
 abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
 {
@@ -51,21 +64,6 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
    * Path delimiter
    */
   private const PATH_DELIM = '/';
-  
-  /**
-   * Multi-route trigger.
-   * This is a suffix appended to some path.
-   * Values must be equal to an array:
-   * 
-   * 'pattern--END' => [
-   *   [route config 1],
-   *   [route config 2]
-   * ]
-   * 
-   * This is for routes that may have the same uri but different options.  ie: different endpoints for get,post,etc
-   *
-   */
-  private const MR_SUFFIX = '--END';
   
   /**
    * Route configuration token: class name or filename 
@@ -86,12 +84,6 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
    * Route configuration token: Route context array 
    */
   private const T_CONTEXT = 'context';
-  
-  /**
-   * A list of valid route configuration tokens.
-   * The order of this array determines the order of the route configuration data array when the array keys are integers
-   */
-  private const T_VALID = [self::T_CLASS, self::T_METHOD, self::T_OPTIONS, self::T_CONTEXT];
   
   
   /**
@@ -118,7 +110,10 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
   
 
   /**
-   * Creates an IHTTPRoute instance 
+   * Creates an IHTTPRoute instance.
+   * 
+   * The route instance is responsible for instantiating and invoking whatever endpoint
+  * 
    * @param string $path The path/pattern
    * @param string $class Class name 
    * @param string $method method name 
@@ -130,6 +125,9 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
   protected abstract function createRoute( string $path, string $class, string $method, array $options, array $context ) : IHTTPRoute;
   
   
+  /**
+   * @param IRouteConfig $config Where route data comes from 
+   */
   public function __construct( IRouteConfig $config )
   {
     $this->config = $config;
@@ -159,6 +157,8 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
         
         foreach( $routeList as $data )
         {
+          //..Even though this is a public method, the assertions are simply checking results from private methods.
+          //  The following assertions are used to double check the route data array and to please psalm.
           assert( is_string( $path ));
           assert( isset( $data[self::T_CLASS] ) && is_string( $data[self::T_CLASS] ));
           assert( isset( $data[self::T_METHOD] ) && is_string( $data[self::T_METHOD] ));
@@ -188,8 +188,6 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
     
     $this->isInitialized = true;
   }
-
-  
 
   
   /**

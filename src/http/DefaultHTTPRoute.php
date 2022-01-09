@@ -17,17 +17,24 @@ use Closure;
 use InvalidArgumentException;
 
 
+/**
+ * The default HTTP route is a pattern and a Closure.
+ * When the pattern matches, the closure is invoked and the result is returned.
+ * 
+ */
 class DefaultHTTPRoute extends HTTPRoute implements IHTTPRoute
 {
+  /**
+   * Where we're going 
+   * @var Closure
+   */
   private Closure $endpoint;
 
   
-  
   /**
-   * 
    * @param IRouteHandler $routeHandler The handler to use on execute() 
    * @param string $path Path pattern 
-   * @param Closure $endpoint
+   * @param Closure $endpoint The code to execute when request uri matches $path
    * @param array<string> $options optional options 
    * @param array<string,mixed> $context context array 
    * @throws InvalidArgumentException If path is empty 

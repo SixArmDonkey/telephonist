@@ -13,6 +13,11 @@ declare( strict_types=1 );
 namespace buffalokiwi\telephonist\http;
 
 
+/**
+ * Represents a route
+ * A route is the definition of a connection between the client and some endpoint on the server, including 
+ * all rules and requirements for use.
+ */
 interface IHTTPRoute
 {
   /**
@@ -21,7 +26,7 @@ interface IHTTPRoute
    * This does NOT test if the selected route options exist or if they are valid or anything.
    * That is dependent on the router implementation 
    * 
-   * @param IHTTPRouteRequest $uri
+   * @param IHTTPRouteRequest $request
    * @param array &$matchedValues Matched argument values.  
    * @return bool If the route matches 
    */

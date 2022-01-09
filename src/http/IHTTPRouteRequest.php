@@ -14,7 +14,11 @@ namespace buffalokiwi\telephonist\http;
 
 
 /**
- * A route request for http messages
+ * A route request for http messages.
+ * 
+ * This is simply a starting point.  Feel free to extend this to add
+ * whatever type of request stuff you need to do things.
+ * 
  */
 interface IHTTPRouteRequest 
 {

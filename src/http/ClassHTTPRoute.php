@@ -15,13 +15,25 @@ namespace buffalokiwi\telephonist\http;
 use buffalokiwi\telephonist\handler\IRouteHandler;
 use InvalidArgumentException;
 
+
+/**
+ * A route that connects to a class.
+ * 
+ * This type of route expects a valid class-string and a string representing the name of a valid method 
+ * within that class.
+ */
 class ClassHTTPRoute extends HTTPRoute implements IHTTPRoute
 {
   /**
-   * 
+   * The class containing the endpoint programming 
    * @var class-string
    */
   private string $class;
+  
+  /**
+   * A method on $class to invoke
+   * @var string
+   */
   private string $method;
   
   

@@ -16,28 +16,48 @@ use buffalokiwi\telephonist\handler\IRouteHandler;
 use InvalidArgumentException;
 
 
-
+/**
+ * The base implementation of an http route, using regular expressions to match against
+ * the client request uri.
+ * 
+ * Note: The route handler must know how to handle whatever type of route this represents
+ */
 abstract class HTTPRoute implements IHTTPRoute
 {
+  /**
+   * The context array key containing the resolved endpoint arguments
+   */
   public const ARGS_CAPTURED = 'args_captured';
   
+  /**
+   * Route executor 
+   * @var IRouteHandler
+   */
   private IRouteHandler $routeHandler;
-  
-  
-  private string $pattern;
-  
+    
+  /**
+   * A regular expression used to match this route 
+   * @var string
+   */
+  private string $pattern;  
   
   /**
+   * A list of codes that will match 
+   * instances of IHTTPRouteOption available in the router.
+   * When the router contains a route option with a matching code from this list,
+   * it is used as part of route validation.  If the code attached to the
+   * route does not exist in the router, then it is ignored.
+   * 
    * @var array<string>
    */
   private array $options;
-
   
   /**
+   * A generic array containing anything
+   * This is used to pass data around
    * @var array<string,mixed>
    */
   private array $context;
-  
   
   /**
    * Get the resource to execute 
@@ -47,10 +67,23 @@ abstract class HTTPRoute implements IHTTPRoute
 
   
   /**
-   * @param IRouteHandler $routeHandler The handler to use on execute() 
+   * @param IRouteHandler $routeHandler When the route matches some uri, the execute() method must be called.
+   * Execute() will invoke IRouteHandler::execute() and return the result.
+   * 
    * @param string $path Path pattern 
-   * @param array<string> $options optional options 
-   * @param array<string,mixed> $context context array 
+   * 
+   * 1) The supplied pattern uses tilde (~) as delimiter
+   * 2) Any ~ within the pattern are converted to / 
+   * 3) The pattern is wrapped with ^ and $. ie: ~^pattern$~
+   * 4) Any capture groups are considered to be endpoint method arguments and must have matching types
+   * 
+   * @param array<string> $options optional options A list of option flags/codes/whatever. The values in this list 
+   * must match the result of IHTTPRouteOption::getCommand()
+   * 
+   * @param array<string,mixed> $context context array Super fun time random array for things!! 
+   * 
+   * Put whatever you want in here and it gets passed around.  Anywhere you see $context, it is this data.
+   * 
    * @throws InvalidArgumentException If path is empty 
    */
   public function __construct( IRouteHandler $routeHandler, string $path, array $options = [], array $context = [] )
@@ -137,6 +170,11 @@ abstract class HTTPRoute implements IHTTPRoute
   }    
 
   
+  /**
+   * Override this method to return a string representing the method to invoke on the supplied resource
+   * @return string method name or an empty string if there is no method to invoke. 
+   * Note: The route handler must know how to handle whatever types of route this is.
+   */
   protected function getIdentifier() : string
   {
     return '';
@@ -176,6 +214,14 @@ abstract class HTTPRoute implements IHTTPRoute
   }  
   
   
+  /**
+   * It's dumb, but this will cast $value to int or float if it contains an int or float.
+   * 
+   * This will return int|float|mixed 
+   * 
+   * @param string $value Value to cast
+   * @return mixed
+   */
   private function castValue( string $value ) : mixed 
   {
     if ( empty( $value ))
@@ -188,4 +234,3 @@ abstract class HTTPRoute implements IHTTPRoute
     return $value;    
   }
 }
-
