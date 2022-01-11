@@ -137,6 +137,24 @@ abstract class HTTPRoute implements IHTTPRoute
    * @param IHTTPRouteRequest $uri
    * @param array &$matchedValues Matched argument values.  
    * @return bool If the route matches 
+   * @todo This is not extensible code.  
+   * This programming limits us to using preg_match and it cannot be replaced with anything else.
+   * Maybe we create something like:
+   * 
+   * +1 
+   * interface IRouteMatcher {
+   *   public function match( string $pattern, string $uri ) : array;
+   * }
+   * 
+   * Pass the matcher to the route constructor?
+   * 
+   * 
+   * -1 
+   * Maybe add a second interface that extends IRouteHandler, IRouteMatcher and use that 
+   * for the $routeHandler type in the constructor, and a simple dto?
+   * 
+   * 
+   * 
    */
   public final function matches( IHTTPRouteRequest $request, array &$matchedValues ) : bool
   {
@@ -147,9 +165,42 @@ abstract class HTTPRoute implements IHTTPRoute
     if ( substr( $uri, -1 ) == '/' )
       $uri = substr( $uri, 0, -1 );
     
-    if ( preg_match( $this->pattern, ( empty( $uri )) ? '/' : $uri, $matches ))
+    if ( preg_match( $this->pattern, ( empty( $uri )) ? '/' : $uri, $matches, PREG_OFFSET_CAPTURE ))
     {
-      $this->setArguments( $matches, $matchedValues );
+      $tmp = [];
+      $i = 1;
+      foreach( $matches as $name => $match )
+      {
+        if ( $i++ <= 1 )
+          continue;
+
+        $tmp[$match[1]][$name] = $match[0];
+      }
+
+
+      $i = 0;
+      $newMatches = [];
+      foreach( $tmp as $group )
+      {
+        if ( sizeof( $group ) < 2 )
+        {
+          $newMatches[$i++] = reset( $group );
+        }
+        else
+        {
+          foreach( $group as $k => $v )
+          {
+            if ( is_int( $k ))
+              continue;
+
+            $newMatches[$k] = $v;
+            break;
+          }
+        }    
+
+      }      
+      
+      $this->setArguments( $newMatches, $matchedValues );
       return true;
     }
     
@@ -189,16 +240,13 @@ abstract class HTTPRoute implements IHTTPRoute
    */
   private function setArguments( array $matches, array &$args ) : void
   {
-    if ( isset( $matches[0] ))
-      unset( $matches[0] );
-    
     if ( !isset( $this->context[self::ARGS_CAPTURED] ) || !is_array( $this->context[self::ARGS_CAPTURED] ))
       $this->context[self::ARGS_CAPTURED] = [];
     
     $captured = $this->context[self::ARGS_CAPTURED];
     
     
-    foreach( array_values( $matches ) as $k => $v )
+    foreach( $matches as $k => $v )
     {
       if ( isset( $captured[$k] ) && !empty( $captured[$k] ) && is_string( $captured[$k] ))
       {

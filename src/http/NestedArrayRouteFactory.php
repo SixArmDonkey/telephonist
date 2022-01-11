@@ -234,10 +234,16 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
 
 
   /**
+   * This will take the input configuration array and "flatten" it into a more better-er configuration array.
    * 
-   * @param array $out
-   * @param string $path
-   * @param array $config
+   * See class docblock.
+   * 
+   * @param array &$out This is the output array 
+   * 
+   * [bucket][path][list,of,routes]
+   * 
+   * @param string $path The current path in the tree (parent key)
+   * @param array $config The configuration data (parent value)
    * @return void
    */
   private function mergeFlattenConfigurationArray( array &$out, string $path, array $config ) : void

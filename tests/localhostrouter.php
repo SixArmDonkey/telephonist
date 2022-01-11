@@ -20,16 +20,40 @@ use buffalokiwi\telephonist\http\DefaultHTTPRouteRequest;
 use buffalokiwi\telephonist\http\FunctionalNestedArrayRouteFactory;
 use buffalokiwi\telephonist\http\FunctionalRouteFactory;
 use buffalokiwi\telephonist\http\MethodRouteOption;
+use buffalokiwi\telephonist\http\QuickRouter;
 use buffalokiwi\telephonist\http\XMLHTTPRequestRouteOption;
 use buffalokiwi\telephonist\RouteNotFoundException;
 use buffalokiwi\teleponist\http\HTTPRouteFactoryGroup;
+
+
+$quick = new QuickRouter([
+  '/' => fn() => 'This is the home page',
+  'test/(\d+)' => fn( $id ) => 'Found digit ' . $id,
+  'test2' => fn() => 'This is the test 2 route'
+]);
+
+
+$withMethod = new DefaultHTTPRouter(
+  (new FunctionalRouteFactory())
+    ->add( 
+      '/',  //..The path pattern
+      static function( array $context ) { //..The route 
+        //..The route content
+        return 'This is the home page for context ' . $context['context'];
+      }, 
+      ['GET'], //..Options/flags
+      ['context' => 'foo'] ), //..Anything you want in an array 
+  new DefaultHTTPRouteOptions( 
+    new MethodRouteOption( MethodRouteOption::GET ))
+);
+  
 
 
 class LocalRouterTest
 {
   public const ROUTE_CONFIG = [
     'test' => [
-       '(\d+)' => [LocalRouterTest::class, 'helloRouterArg', ['GET'], []],
+       '(?<i>\d+)' => [LocalRouterTest::class, 'helloRouterArg', ['GET'], []],
        '' => [LocalRouterTest::class, 'helloRouter', ['GET'], []]
     ]
   ];
@@ -40,8 +64,9 @@ class LocalRouterTest
   }
   
   
-  public static function helloRouterArg( int $i ) : string
+  public static function helloRouterArg( int $i, array $context ) : string
   {
+    var_dump( $context );
     return 'Hello Router ' . (string)$i . '!';
   }
 }
@@ -62,6 +87,8 @@ $router = new DefaultHTTPRouter(
     new MethodRouteOption( MethodRouteOption::GET ),
     new XMLHTTPRequestRouteOption()
 ));
+
+    
 
 
 try {

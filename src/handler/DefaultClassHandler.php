@@ -59,10 +59,20 @@ class DefaultClassHandler implements IRouteHandler
   private const T_NULL = 'null';
   
   
+  /**
+   * When true, the context array is added to the arguments array as 'context'
+   * @var bool
+   */
+  private bool $addContextToNamedArguments;
   
-  public function __construct()
+  
+  /**
+   * 
+   * @param bool $addContextToNamedArguments When true, the context array is added to the arguments array as 'context'
+   */
+  public function __construct( bool $addContextToNamedArguments = true )
   {
-    //..Do nothing
+    $this->addContextToNamedArguments = $addContextToNamedArguments;
   }
     
   
@@ -101,6 +111,9 @@ class DefaultClassHandler implements IRouteHandler
   {
     if ( empty( $identifier ))
       throw new RouteConfigurationException( 'Method endpoint for ' . (( is_string( $resource )) ? $resource : get_class( $resource )) . ' must not be empty' );
+    
+    if ( $this->addContextToNamedArguments && !isset( $args['context'] ))
+      $args['context'] = $context;
     
     if ( is_string( $resource ))
       return $this->executeClassString( $resource, $identifier, $args, $context );
@@ -239,6 +252,7 @@ class DefaultClassHandler implements IRouteHandler
    * @param string $types
    * @return object
    * @psalm-suppress ArgumentTypeCoercion
+   * @todo Fix this. Change $types to class-string 
    */
   private function getInstanceFromTypeList( string ...$types ) : ?object
   {

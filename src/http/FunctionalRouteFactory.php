@@ -13,6 +13,7 @@ declare( strict_types=1 );
 namespace buffalokiwi\telephonist\http;
 
 use buffalokiwi\telephonist\handler\FunctionalHandler;
+use buffalokiwi\telephonist\handler\IRouteHandler;
 use buffalokiwi\telephonist\RouteConfigurationException;
 use Closure;
 use InvalidArgumentException;
@@ -43,22 +44,30 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
   
   
   /**
-   * @param Closure $iRouteFactory fn( string $path, \Closure $endpoint, array $options, array $context ) : IHTTPRoute
+   * @param Closure|null $iRouteFactory fn( string $path, \Closure $endpoint, array $options, array $context ) : IHTTPRoute
+   * @param bool $addContextToNamedRoutes Set to true and array $context argument is expected to exist on each route.
    */
   public function __construct( ?Closure $iRouteFactory = null )
   {
     if ( $iRouteFactory != null )
       $this->iRouteFactory = $iRouteFactory;
     else
-    {
-      $handler = new FunctionalHandler();
-      $this->iRouteFactory = static function( string $path, Closure $endpoint, array $options, array $context ) use($handler) : IHTTPRoute {
-        /** @var class-string $class 
-            @var array<string> $options 
-            @var array<string,mixed> $context */        
-        return new DefaultHTTPRoute( $handler, $path, $endpoint, $options, $context );
-      };
-    }
+      $this->iRouteFactory = self::createDefaultRouteFactory( new FunctionalHandler());
+  }
+  
+  
+  /**
+   * @param IRouteHandler $handler Handler 
+   * @return \Closure fn( string $path, \Closure $endpoint, array $options, array $context ) : IHTTPRoute
+   */
+  public static final function createDefaultRouteFactory( IRouteHandler $handler ) : \Closure
+  {
+    return static function( string $path, Closure $endpoint, array $options, array $context ) use($handler) : IHTTPRoute {
+      /** @var class-string $class 
+          @var array<string> $options 
+          @var array<string,mixed> $context */        
+      return new DefaultHTTPRoute( $handler, $path, $endpoint, $options, $context );
+    };
   }
   
   

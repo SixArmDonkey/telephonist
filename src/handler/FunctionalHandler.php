@@ -21,6 +21,17 @@ use Closure;
  */
 class FunctionalHandler implements IRouteHandler
 {
+  private bool $addContextToNamedRoutes;
+  
+  /**
+   * @param bool $addContextToNamedRoutes Set to true to set the argument 'context' equal to $context
+   */
+  public function __construct( bool $addContextToNamedRoutes = false )
+  {
+    $this->addContextToNamedRoutes = $addContextToNamedRoutes;
+  }
+  
+  
   /**
    * Execute some endpoint handler.  This will execute either resource or the identifier at resource.
    * @param string|object $resource A function to call
@@ -34,7 +45,13 @@ class FunctionalHandler implements IRouteHandler
     if ( !( $resource instanceof Closure ))
       throw new RouteConfigurationException( 'Route resource must be a clsoure when using ' . static::class );
     
+    
     $args[] = $context;
+    
+    if ( is_int( array_key_first( $args )))
+      $args[] = $context;
+    else if ( $this->addContextToNamedRoutes )
+      $args['context'] = $context;
     
     return $resource( ...$args );
   }

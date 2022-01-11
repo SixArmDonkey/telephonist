@@ -13,6 +13,7 @@ declare( strict_types=1 );
 namespace buffalokiwi\telephonist\http;
 
 use buffalokiwi\telephonist\handler\DefaultClassHandler;
+use buffalokiwi\telephonist\handler\IRouteHandler;
 use buffalokiwi\telephonist\IRouteConfig;
 use buffalokiwi\telephonist\RouteConfigurationException;
 use Closure;
@@ -42,18 +43,23 @@ class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
     if ( $iRouteFactory instanceof Closure )
       $this->iRouteFactory = $iRouteFactory;
     else
-    {
-      $handler = new DefaultClassHandler();
-      
-      
-      
-      $this->iRouteFactory = static function( string $path, string $class, string $method, array $options, array $context ) use($handler) : IHTTPRoute {
-        /** @var class-string $class 
-            @var array<string> $options 
-            @var array<string,mixed> $context */
-        return new ClassHTTPRoute( $handler, $path, $class, $method, $options, $context );
-      };
-    }
+      $this->iRouteFactory = self::createDefaultRouteFactory( new DefaultClassHandler());
+  }
+  
+  
+  /**
+   * Creates a default route factory
+   * @param IRouteHandler $handler
+   * @return \Closure fn( string $path, string $class, string $method, array $options, array $context ) : IHTTPRoute
+   */
+  public static final function createDefaultRouteFactory( IRouteHandler $handler ) : \Closure 
+  {
+    return static function( string $path, string $class, string $method, array $options, array $context ) use($handler) : IHTTPRoute {
+      /** @var class-string $class 
+          @var array<string> $options 
+          @var array<string,mixed> $context */
+      return new ClassHTTPRoute( $handler, $path, $class, $method, $options, $context );
+    };
   }
   
   
