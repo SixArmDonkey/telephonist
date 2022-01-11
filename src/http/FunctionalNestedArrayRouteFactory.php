@@ -43,17 +43,18 @@ class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
     if ( $iRouteFactory instanceof Closure )
       $this->iRouteFactory = $iRouteFactory;
     else
-      $this->iRouteFactory = self::createDefaultRouteFactory( new DefaultClassHandler());
+      $this->iRouteFactory = self::createDefaultRouteFactory();
   }
   
   
   /**
    * Creates a default route factory
-   * @param IRouteHandler $handler
+   * @param bool $addContextToNamedArguments When true, the context array is added to the arguments array as 'context'
    * @return \Closure fn( string $path, string $class, string $method, array $options, array $context ) : IHTTPRoute
    */
-  public static final function createDefaultRouteFactory( IRouteHandler $handler ) : \Closure 
+  public static final function createDefaultRouteFactory( bool $addContextToNamedArguments = false ) : \Closure 
   {
+    $handler = new DefaultClassHandler( $addContextToNamedArguments );
     return static function( string $path, string $class, string $method, array $options, array $context ) use($handler) : IHTTPRoute {
       /** @var class-string $class 
           @var array<string> $options 

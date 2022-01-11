@@ -46,11 +46,9 @@ class FunctionalHandler implements IRouteHandler
       throw new RouteConfigurationException( 'Route resource must be a clsoure when using ' . static::class );
     
     
-    $args[] = $context;
-    
     if ( is_int( array_key_first( $args )))
       $args[] = $context;
-    else if ( $this->addContextToNamedRoutes )
+    if ( $this->addContextToNamedRoutes )
       $args['context'] = $context;
     
     return $resource( ...$args );

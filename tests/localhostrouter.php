@@ -14,6 +14,8 @@ namespace buffalokiwi\telephonist\tests;
 require_once( __DIR__ . '/bootstrap.php' );
 
 use buffalokiwi\telephonist\FunctionalRouteConfig;
+use buffalokiwi\telephonist\handler\DefaultClassHandler;
+use buffalokiwi\telephonist\handler\FunctionalHandler;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteOptions;
 use buffalokiwi\telephonist\http\DefaultHTTPRouter;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteRequest;
@@ -74,12 +76,13 @@ class LocalRouterTest
 $router = new DefaultHTTPRouter(
   new HTTPRouteFactoryGroup(
     new FunctionalNestedArrayRouteFactory(
-      new FunctionalRouteConfig( fn() => LocalRouterTest::ROUTE_CONFIG )),
-    (new FunctionalRouteFactory())
+      new FunctionalRouteConfig( fn() => LocalRouterTest::ROUTE_CONFIG ), 
+      FunctionalNestedArrayRouteFactory::createDefaultRouteFactory( true )),
+    (new FunctionalRouteFactory( FunctionalRouteFactory::createDefaultRouteFactory( true )))
     ->add( 'test2', function() {
       return 'Hello Router 2!';
     })
-    ->add( 'test2/(\d+[a-z])', function( int|string $int, array $context ) {
+    ->add( 'test2/(?<int>\d+[a-z])', function( int|string $int, array $context ) {
       return 'Found ' . (string)$int . ' with context ' . $context['context'];
     }, ['GET'], ['context' => 'foo'] )
   ),
@@ -87,8 +90,6 @@ $router = new DefaultHTTPRouter(
     new MethodRouteOption( MethodRouteOption::GET ),
     new XMLHTTPRequestRouteOption()
 ));
-
-    
 
 
 try {

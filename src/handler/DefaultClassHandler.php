@@ -70,7 +70,7 @@ class DefaultClassHandler implements IRouteHandler
    * 
    * @param bool $addContextToNamedArguments When true, the context array is added to the arguments array as 'context'
    */
-  public function __construct( bool $addContextToNamedArguments = true )
+  public function __construct( bool $addContextToNamedArguments = false )
   {
     $this->addContextToNamedArguments = $addContextToNamedArguments;
   }

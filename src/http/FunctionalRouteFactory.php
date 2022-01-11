@@ -52,16 +52,17 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
     if ( $iRouteFactory != null )
       $this->iRouteFactory = $iRouteFactory;
     else
-      $this->iRouteFactory = self::createDefaultRouteFactory( new FunctionalHandler());
+      $this->iRouteFactory = self::createDefaultRouteFactory();
   }
   
   
   /**
-   * @param IRouteHandler $handler Handler 
+   * @param bool $addContextToNamedArguments When true, the context array is added to the arguments array as 'context'
    * @return \Closure fn( string $path, \Closure $endpoint, array $options, array $context ) : IHTTPRoute
    */
-  public static final function createDefaultRouteFactory( IRouteHandler $handler ) : \Closure
+  public static final function createDefaultRouteFactory( bool $addContextToNamedArguments = false ) : \Closure
   {
+    $handler = new FunctionalHandler( $addContextToNamedArguments );
     return static function( string $path, Closure $endpoint, array $options, array $context ) use($handler) : IHTTPRoute {
       /** @var class-string $class 
           @var array<string> $options 
