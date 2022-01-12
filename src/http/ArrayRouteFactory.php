@@ -12,8 +12,8 @@ declare( strict_types=1 );
 
 namespace buffalokiwi\telephonist\http;
 
-use buffalokiwi\telephonist\handler\DefaultClassHandler;
-use buffalokiwi\telephonist\handler\IRouteHandler;
+use buffalokiwi\telephonist\handler\ArgumentResolver;
+use buffalokiwi\telephonist\handler\ClassRouteHandler;
 use buffalokiwi\telephonist\IRouteConfig;
 use buffalokiwi\telephonist\RouteConfigurationException;
 use Closure;
@@ -22,7 +22,7 @@ use Closure;
 /**
  * 
  */
-class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
+class ArrayRouteFactory extends NestedArrayRouteFactory
 {
   /**
    * Closure for creating instances of IHTTPRoute.
@@ -54,7 +54,7 @@ class FunctionalNestedArrayRouteFactory extends NestedArrayRouteFactory
    */
   public static final function createDefaultRouteFactory( bool $addContextToNamedArguments = false ) : \Closure 
   {
-    $handler = new DefaultClassHandler( $addContextToNamedArguments );
+    $handler = new ClassRouteHandler( new ArgumentResolver(), $addContextToNamedArguments );
     return static function( string $path, string $class, string $method, array $options, array $context ) use($handler) : IHTTPRoute {
       /** @var class-string $class 
           @var array<string> $options 

@@ -19,7 +19,7 @@ use Closure;
 /**
  * A route config implementation that uses a function to return some config array.
  */
-class FunctionalRouteConfig implements IRouteConfig
+class DefaultRouteConfig implements IRouteConfig
 {
   private Closure $loadConfig;
   private ?array $configCache = null;

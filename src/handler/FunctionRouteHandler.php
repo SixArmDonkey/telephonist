@@ -19,7 +19,7 @@ use Closure;
 /**
  * A handler that accepts a closure on calls to execute 
  */
-class FunctionalHandler implements IRouteHandler
+class FunctionRouteHandler implements IRouteHandler
 {
   private bool $addContextToNamedRoutes;
   
@@ -48,7 +48,7 @@ class FunctionalHandler implements IRouteHandler
     
     if ( is_int( array_key_first( $args )))
       $args[] = $context;
-    if ( $this->addContextToNamedRoutes )
+    else if ( $this->addContextToNamedRoutes )
       $args['context'] = $context;
     
     return $resource( ...$args );

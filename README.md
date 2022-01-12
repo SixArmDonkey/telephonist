@@ -4,16 +4,16 @@
 
 ```php
 
-use buffalokiwi\telephonist\FunctionalRouteConfig;
+use buffalokiwi\telephonist\DefaultRouteConfig;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteOptions;
 use buffalokiwi\telephonist\http\DefaultHTTPRouter;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteRequest;
-use buffalokiwi\telephonist\http\FunctionalNestedArrayRouteFactory;
-use buffalokiwi\telephonist\http\FunctionalRouteFactory;
+use buffalokiwi\telephonist\http\ArrayRouteFactory;
+use buffalokiwi\telephonist\http\DefaultRouteFactory;
 use buffalokiwi\telephonist\http\MethodRouteOption;
 use buffalokiwi\telephonist\http\XMLHTTPRequestRouteOption;
 use buffalokiwi\telephonist\RouteNotFoundException;
-use buffalokiwi\teleponist\http\HTTPRouteFactoryGroup;
+use buffalokiwi\telephonist\http\HTTPRouteFactoryGroup;
 
 class LocalRouterTest
 {
@@ -36,9 +36,9 @@ class LocalRouterTest
 
 $router = new DefaultHTTPRouter(
   new HTTPRouteFactoryGroup(
-    new FunctionalNestedArrayRouteFactory(
-      new FunctionalRouteConfig( fn() => LocalRouterTest::ROUTE_CONFIG )),
-    (new FunctionalRouteFactory())
+    new ArrayRouteFactory(
+      new DefaultRouteConfig( fn() => LocalRouterTest::ROUTE_CONFIG )),
+    (new DefaultRouteFactory())
     ->add( 'test2', function() {
       return 'Hello Router 2!';
     })

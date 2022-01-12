@@ -10,7 +10,7 @@
 
 declare( strict_types=1 );
 
-namespace buffalokiwi\teleponist\http;
+namespace buffalokiwi\telephonist\http;
 
 use buffalokiwi\telephonist\http\IHTTPRoute;
 use buffalokiwi\telephonist\http\IHTTPRouteFactory;

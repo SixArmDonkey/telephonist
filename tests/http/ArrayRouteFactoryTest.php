@@ -13,7 +13,7 @@ declare( strict_types=1 );
 
 namespace NestedARrayRouteFactoryTest;
 
-use buffalokiwi\telephonist\http\FunctionalNestedArrayRouteFactory;
+use buffalokiwi\telephonist\http\ArrayRouteFactory;
 use buffalokiwi\telephonist\http\IHTTPRoute;
 use buffalokiwi\telephonist\http\IHTTPRouteRequest;
 use buffalokiwi\telephonist\IRouteConfig;
@@ -21,7 +21,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 
-class FunctionalNestedArrayRouteFactoryTest extends TestCase 
+class ArrayRouteFactoryTest extends TestCase 
 {
   private const PATH1 = ['path1class', 'path1method', ['path1option1'], ['path1contextkey' => 'path1contextvalue']];
   private const TEST1 = ['path1' => self::PATH1];
@@ -34,7 +34,7 @@ class FunctionalNestedArrayRouteFactoryTest extends TestCase
     
     $phpunit = $this;
     
-    (new FunctionalNestedArrayRouteFactory( 
+    (new ArrayRouteFactory( 
       $mockConfig, 
       function( string $path, string $class, string $method, array $options, array $context ) use ($phpunit) : IHTTPRoute {
         

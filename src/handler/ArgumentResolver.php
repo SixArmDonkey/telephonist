@@ -13,23 +13,17 @@ declare( strict_types=1 );
 namespace buffalokiwi\telephonist\handler;
 
 use buffalokiwi\telephonist\RouteConfigurationException;
-use InvalidArgumentException;
 use ReflectionClass;
-use ReflectionException;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionUnionType;
+use \InvalidArgumentException;
 use function ctype_digit;
-use function json_encode;
+use function \json_encode;
 
 
-/**
- * Given some route data, this will instantiate and invoke some method.
- * 
- * 
- */
-class DefaultClassHandler implements IRouteHandler
+class ArgumentResolver implements IArgumentResolver
 {
   /**
    * Context array key containing an array of class constructor arguments.
@@ -57,73 +51,55 @@ class DefaultClassHandler implements IRouteHandler
    * The null type name as returned by ReflectionType::getName()
    */
   private const T_NULL = 'null';
+    
   
   
-  /**
-   * When true, the context array is added to the arguments array as 'context'
-   * @var bool
-   */
-  private bool $addContextToNamedArguments;
-  
-  
-  /**
-   * 
-   * @param bool $addContextToNamedArguments When true, the context array is added to the arguments array as 'context'
-   */
-  public function __construct( bool $addContextToNamedArguments = false )
+  public function __construct()
   {
-    $this->addContextToNamedArguments = $addContextToNamedArguments;
+    
   }
-    
+  
   
   /**
-   * 
-   * @param class-string|object $resource The fully qualified class name 
-   * @param string $identifier The method name 
-   * @param array $args Arguments to be passed to the method endpoint.  If this is an associative array. 
-   * named arguments will be used.
-   * 
-   * @param array $context Meta data.  This array may contain keys:
-   * 
-   * "args_class"  - Arguments passed to the class constructor defined by $class
-   * "args_method" - Arguments passed to the method defined by $method
-   * 
-   * Arguments are processed and merged as follows:
-   * 
-   * 1) $methodArgs contains matches from some route pattern and contain user input.  
-   * 2) Optionally, method arguments may be obtained from the $context array 
-   *   a) Each element from $context[args_method] is added to $methodArgs 
-   *   b) If all keys in $methodArgs are strings, then named arguments are used.  Otherwise, the keys
-   *      of $methodArgs are replaced with sequential integers starting with zero, and the method arguments are passed 
-   *      in the order they were received.
-   *      
-   * 3) Class arguments can be passed by $context[args_class] and/or entirely through reflection and some 
-   *    sort service locator container.
-   *   a) Arguments received via $context[args_class] can use either integer or string keys
-   *      i) Entries with integer keys will be supplied directly to the class constructor at the 
-   *         position defined by the key
-   *     ii) Entries with string keys will be treated as named arguments.  
-   *    iii) Entries with string values that start with a backslash (\) are first run through class_exists().  If the
-   *         class exists, then the instantiateClass() method is called.  The result of this method must be an instance
-   *         of the supplied type.
+   * Prepare the class arguments for some constructor
+   * @param ReflectionClass $c Constructor params 
+   * @param array $context Route context
+   * @return array prepared arguments.  This may be named or positional.
    */
-  public function execute( string|object $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
+  public function prepareClassArgs( ReflectionClass $c, array $context )
   {
-    if ( empty( $identifier ))
-      throw new RouteConfigurationException( 'Method endpoint for ' . (( is_string( $resource )) ? $resource : get_class( $resource )) . ' must not be empty' );
-    
-    if ( $this->addContextToNamedArguments && !isset( $args['context'] ))
-      $args['context'] = $context;
-    
-    if ( is_string( $resource ))
-      return $this->executeClassString( $resource, $identifier, $args, $context );
-    
-    return $this->executeObject( $resource, $identifier, $args, $context );
+    return $this->reflectionParametersToArgumentsArray(
+      $this->getArgumentArray( self::C_ARGS_CLASS, $context ),
+      ...( $c->getConstructor()?->getParameters() ?? [] )
+    ); 
+  }  
+  
+   
+  /**
+   * Given a reflection method and a list of arguments, 
+   * figure out what arguments we're going to pass to the method when it is invoked.
+   * 
+   * @param ReflectionMethod $m Method
+   * @param array $args Argument array
+   * @param array $context route context (This may contain an array key self::C_ARGS_METHOD, which can contain 
+   * more arguments to pass to the method)  
+   * @return array Prepared arguments. This may be named or positional.
+   */
+  public function prepareMethodArgs( ReflectionMethod $m, array $args, array $context ) : array
+  {    
+    return $this->reflectionParametersToArgumentsArray( 
+      $args + $this->getArgumentArray( self::C_ARGS_METHOD, $context ),
+      ...$m->getParameters()
+    );           
   }
   
   
   /**
    * Retrieve an instance of some class.
+   * 
+   * If you want to use some sort of DI container or whatever, simply override this and wire it to 
+   * whatever get instance method on the container.
+   * 
    * If $type is a valid class and the class constructor has no parameters, then this will return 
    * a new instance of $type.
    * @param string $type Class name 
@@ -142,109 +118,7 @@ class DefaultClassHandler implements IRouteHandler
     }
     
     return null;
-  }
-  
-  
-  /**
-   * Invokes a method on an instance of some class object.
-   * @param object $resource Class instance 
-   * @param string $identifier Method name 
-   * @param array $args Argument array 
-   * @param array $context Route context array 
-   * @return mixed route result 
-   * @throws RouteConfigurationException
-   */
-  private function executeObject( object $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
-  {
-    $m = new ReflectionMethod( $resource, $identifier );
-    
-    if ( $m->isStatic())
-    {
-      throw new RouteConfigurationException( 'Cannot call static method on instantiated object of type ' 
-        . get_class( $resource ));
-    }
-    
-    return $m->invoke( $resource, ...$this->prepareMethodArgs( $m, $args, $context ));
-  }
-  
-  
-  /**
-   * Instantiates a class defined by $resource and invokes method $identifier with arguments $args 
-   * @param string $resource class name
-   * @param string $identifier method name 
-   * @param array $args argument list  
-   * @param array $context route context 
-   * @return mixed route response 
-   * @throws RouteConfigurationException
-   */
-  private function executeClassString( string $resource, string $identifier = '', array $args = [], array $context = [] ) : mixed
-  {
-    if ( !class_exists( $resource ))
-      throw new RouteConfigurationException( 'Supplied class string: "' . $resource . '" is not an existing class' );
-    
-    $c = new ReflectionClass( $resource );
-    
-    try {
-      $m = $c->getMethod( $identifier );
-    } catch( ReflectionException ) {
-      $m = null;
-    }
-    
-    if ( is_null( $m ))
-    {
-      throw new RouteConfigurationException( 'Method "' . $identifier . '" is not a valid method of class '
-        . '"' . $resource . '".' );
-    }
-
-    //..Get class constructor arguments    
-    $cArgs = $this->reflectionParametersToArgumentsArray(
-      $this->getArgumentArray( self::C_ARGS_CLASS, $context ),
-      ...($c->getConstructor()?->getParameters() ?? [])
-    );
-    
-    //..Supplied method arguments merged with method arguments from context array and filtered 
-    $mArgs = $this->prepareMethodArgs( $m, $args, $context );
- 
-    
-    if ( !$m->isStatic())
-    {
-      //..Execute the method 
-      return $m->invoke( $c->newInstance( ...$cArgs ), ...$mArgs );
-    }
-    
-    
-    //..This is a static method 
-    if ( sizeof( $cArgs ) > 0 )
-    {
-      throw new RouteConfigurationException( 'Route endpoint is static method "' . $m->getName() 
-        . '" of class "' . $c->getName()
-        . '", but class constructor arguments have been defined in the route '
-        . 'context array.  Class constructors are never called when routing to a static method, and your '
-        . 'intention may be unclear.  Either remove the class arguments, remove the static designation, or move the '
-        . 'static method to a new static class with no constructor' );
-    }
-        
-    return $m->invoke( null, ...$mArgs );
-  }
-  
-   
-  /**
-   * Given a reflection method and a list of arguments, 
-   * figure out what arguments we're going to pass to the method when it is invoked.
-   * 
-   * @param ReflectionMethod $m Method
-   * @param array $args Argument array
-   * @param array $context route context (This may contain an array key self::C_ARGS_METHOD, which can contain 
-   * more arguments to pass to the method)  
-   * @return array
-   */
-  private function prepareMethodArgs( ReflectionMethod $m, array $args, array $context ) : array
-  {    
-    return $this->reflectionParametersToArgumentsArray( 
-      $args + $this->getArgumentArray( self::C_ARGS_METHOD, $context ),
-      ...$m->getParameters()
-    );           
-  }
+  }  
   
   
   /**
@@ -460,7 +334,6 @@ class DefaultClassHandler implements IRouteHandler
   }
   
   
-  
   /**
    * Retrieve a list of object parameter types for a given parameter.
    * This returns an empty string if the parameter types are scalar, array 
@@ -526,11 +399,6 @@ class DefaultClassHandler implements IRouteHandler
   }
   
   
-
-  
-  
-  
-  
   /**
    * Retrieve the argument value array to pass to some constructor or function 
    * @param string $key The array key that should contain a map of arguments 
@@ -546,5 +414,6 @@ class DefaultClassHandler implements IRouteHandler
       throw new RouteConfigurationException( 'Context[' . $key . '] must be an array.' );
     
     return $context[$key];
-  }  
+  }    
 }
+

@@ -47,12 +47,12 @@ class QuickRouter extends DefaultHTTPRouter
   
   /**
    * @param array<string,\Closure> $routes Routes
-   * @return FunctionalRouteFactory The route factory 
+   * @return DefaultRouteFactory The route factory 
    * @throws RouteConfigurationException
    */
-  private function createRouteFactory( array $routes ) : FunctionalRouteFactory
+  private function createRouteFactory( array $routes ) : DefaultRouteFactory
   {
-    $factory = new FunctionalRouteFactory();
+    $factory = new DefaultRouteFactory();
     
     foreach( $routes as $path => $route )
     {

@@ -13,19 +13,17 @@ declare( strict_types=1 );
 namespace buffalokiwi\telephonist\tests;
 require_once( __DIR__ . '/bootstrap.php' );
 
-use buffalokiwi\telephonist\FunctionalRouteConfig;
-use buffalokiwi\telephonist\handler\DefaultClassHandler;
-use buffalokiwi\telephonist\handler\FunctionalHandler;
+use buffalokiwi\telephonist\DefaultRouteConfig;
+use buffalokiwi\telephonist\http\ArrayRouteFactory;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteOptions;
 use buffalokiwi\telephonist\http\DefaultHTTPRouter;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteRequest;
-use buffalokiwi\telephonist\http\FunctionalNestedArrayRouteFactory;
-use buffalokiwi\telephonist\http\FunctionalRouteFactory;
+use buffalokiwi\telephonist\http\DefaultRouteFactory;
 use buffalokiwi\telephonist\http\MethodRouteOption;
 use buffalokiwi\telephonist\http\QuickRouter;
 use buffalokiwi\telephonist\http\XMLHTTPRequestRouteOption;
 use buffalokiwi\telephonist\RouteNotFoundException;
-use buffalokiwi\teleponist\http\HTTPRouteFactoryGroup;
+use buffalokiwi\telephonist\http\HTTPRouteFactoryGroup;
 
 
 $quick = new QuickRouter([
@@ -36,7 +34,7 @@ $quick = new QuickRouter([
 
 
 $withMethod = new DefaultHTTPRouter(
-  (new FunctionalRouteFactory())
+  (new DefaultRouteFactory())
     ->add( 
       '/',  //..The path pattern
       static function( array $context ) { //..The route 
@@ -73,18 +71,29 @@ class LocalRouterTest
   }
 }
 
+
 $router = new DefaultHTTPRouter(
   new HTTPRouteFactoryGroup(
-    new FunctionalNestedArrayRouteFactory(
-      new FunctionalRouteConfig( fn() => LocalRouterTest::ROUTE_CONFIG ), 
-      FunctionalNestedArrayRouteFactory::createDefaultRouteFactory( true )),
-    (new FunctionalRouteFactory( FunctionalRouteFactory::createDefaultRouteFactory( true )))
-    ->add( 'test2', function() {
+    new ArrayRouteFactory(
+      new DefaultRouteConfig( fn() => LocalRouterTest::ROUTE_CONFIG ), 
+      ArrayRouteFactory::createDefaultRouteFactory( true )),
+    (new DefaultRouteFactory( DefaultRouteFactory::createDefaultRouteFactory( true )))
+    ->add( '/', static function( array $context ) {
+      return 'Home page';
+    })
+    ->add( 'test2', static function( array $context ) {
       return 'Hello Router 2!';
     })
-    ->add( 'test2/(?<int>\d+[a-z])', function( int|string $int, array $context ) {
+    ->add( 'test2/(?<int>\d+[a-z])', static function( int|string $int, array $context ) {
       return 'Found ' . (string)$int . ' with context ' . $context['context'];
     }, ['GET'], ['context' => 'foo'] )
+    ->add( '/blog(/\d+)?(/\d+)?(/\d+)?(/[a-z0-9_-]+)?', static function( ?int $year = null, ?int $month = null, ?int $day = null, ?string $slug = null, array $context = []) {
+        if (!$year) { echo 'Blog overview'; return; }
+        if (!$month) { echo 'Blog year overview'; return; }
+        if (!$day) { echo 'Blog month overview'; return; }
+        if (!$slug) { echo 'Blog day overview'; return; }
+        echo 'Blogpost ' . htmlentities($slug) . ' detail';
+    })
   ),
   new DefaultHTTPRouteOptions(
     new MethodRouteOption( MethodRouteOption::GET ),

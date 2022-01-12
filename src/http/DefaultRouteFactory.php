@@ -12,7 +12,7 @@ declare( strict_types=1 );
 
 namespace buffalokiwi\telephonist\http;
 
-use buffalokiwi\telephonist\handler\FunctionalHandler;
+use buffalokiwi\telephonist\handler\FunctionRouteHandler;
 use buffalokiwi\telephonist\handler\IRouteHandler;
 use buffalokiwi\telephonist\RouteConfigurationException;
 use Closure;
@@ -20,7 +20,7 @@ use InvalidArgumentException;
 
 
 
-class FunctionalRouteFactory implements IHTTPRouteFactory
+class DefaultRouteFactory implements IHTTPRouteFactory
 {
   /**
    * Path delimiter
@@ -62,7 +62,7 @@ class FunctionalRouteFactory implements IHTTPRouteFactory
    */
   public static final function createDefaultRouteFactory( bool $addContextToNamedArguments = false ) : \Closure
   {
-    $handler = new FunctionalHandler( $addContextToNamedArguments );
+    $handler = new FunctionRouteHandler( $addContextToNamedArguments );
     return static function( string $path, Closure $endpoint, array $options, array $context ) use($handler) : IHTTPRoute {
       /** @var class-string $class 
           @var array<string> $options 

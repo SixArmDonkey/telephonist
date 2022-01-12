@@ -13,10 +13,11 @@ declare( strict_types=1 );
 
 namespace NestedARrayRouteFactoryTest;
 
-use buffalokiwi\telephonist\handler\DefaultClassHandler;
+use buffalokiwi\telephonist\handler\ArgumentResolver;
+use buffalokiwi\telephonist\handler\ClassRouteHandler;
+use buffalokiwi\telephonist\http\ArrayRouteFactory;
 use buffalokiwi\telephonist\http\DefaultHTTPRoute;
 use buffalokiwi\telephonist\http\DefaultHTTPRouteRequest;
-use buffalokiwi\telephonist\http\FunctionalNestedArrayRouteFactory;
 use buffalokiwi\telephonist\http\IHTTPRoute;
 use buffalokiwi\telephonist\http\IHTTPRouteRequest;
 use buffalokiwi\telephonist\http\NestedArrayRouteFactory;
@@ -401,8 +402,8 @@ class NestedArrayRouteFactoryTest extends TestCase
   );
     
     
-    $handler = new DefaultClassHandler();
-    $f = new FunctionalNestedArrayRouteFactory(
+    $handler = new ClassRouteHandler( new ArgumentResolver());
+    $f = new ArrayRouteFactory(
       $config,
       function( string $path, string $class, string $method, array $options, array $context ) use ($handler) : IHTTPRoute {
         //..Different handlers are applied here.  This should probably be based on some context array entry.

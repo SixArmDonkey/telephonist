@@ -10,18 +10,18 @@
 
 declare( strict_types=1 );
 
-use buffalokiwi\telephonist\FunctionalRouteConfig;
+use buffalokiwi\telephonist\DefaultRouteConfig;
 use PHPUnit\Framework\TestCase;
 
-class FunctionalRouteConfigTest extends TestCase 
+class DefaultRouteConfigTest extends TestCase 
 {
   public function testConstruct()
   {
     //..Expect nothing to happen
-    new FunctionalRouteConfig( function() {} );
+    new DefaultRouteConfig( function() {} );
     
     $this->expectError( TypeError::class );    
-    new FunctionalRouteConfig();
+    new DefaultRouteConfig();
   }
   
   
@@ -38,56 +38,56 @@ class FunctionalRouteConfigTest extends TestCase
     $a = ['test'];
     $f = function() use($a) { return $a; } ;
     
-    $c = new FunctionalRouteConfig( $f );    
+    $c = new DefaultRouteConfig( $f );    
     $this->assertSame( $a, $c->getConfig());
     
     $err = 'When returning anything other than array from the closure passed to the constructor, a RouteConfigurationException must be thrown';
     
     
     try {
-      ( new FunctionalRouteConfig( function() {} ))->getConfig();
+      ( new DefaultRouteConfig( function() {} ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected
     }
     
     try {
-      ( new FunctionalRouteConfig( function() { return 'a'; } ))->getConfig();
+      ( new DefaultRouteConfig( function() { return 'a'; } ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected
     }
     
     try {
-      ( new FunctionalRouteConfig( function() { return 1; } ))->getConfig();
+      ( new DefaultRouteConfig( function() { return 1; } ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected
     }
     
     try {
-      ( new FunctionalRouteConfig( function() { return 1.1; } ))->getConfig();
+      ( new DefaultRouteConfig( function() { return 1.1; } ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected
     }
     
     try {
-      ( new FunctionalRouteConfig( function() { return true; } ))->getConfig();
+      ( new DefaultRouteConfig( function() { return true; } ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected
     }
     
     try {
-      ( new FunctionalRouteConfig( function() { return new \stdClass(); } ))->getConfig();
+      ( new DefaultRouteConfig( function() { return new \stdClass(); } ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected
     }
     
     try {
-      ( new FunctionalRouteConfig( function() { return null; } ))->getConfig();
+      ( new DefaultRouteConfig( function() { return null; } ))->getConfig();
       $this->fail( $err );
     } catch ( buffalokiwi\telephonist\RouteConfigurationException ) {
       //..Expected

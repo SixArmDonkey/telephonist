@@ -10,9 +10,10 @@
 
 declare( strict_types=1 );
 
-namespace DefaultClassHandlerTest;
+namespace ClassRouteHandlerTest;
 
-use buffalokiwi\telephonist\handler\DefaultClassHandler;
+use buffalokiwi\telephonist\handler\ArgumentResolver;
+use buffalokiwi\telephonist\handler\ClassRouteHandler;
 use buffalokiwi\telephonist\RouteConfigurationException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -47,15 +48,15 @@ class InvalidStaticTestClass
 }
 
 
-class DefaultClassHandlerTest extends TestCase
+class ClassRouteHandlerTest extends TestCase
 {
   
-  private ?DefaultClassHandler $instance = null;
+  private ?ClassRouteHandler $instance = null;
   
   
   public function setUp() : void
   {
-    $this->instance = new DefaultClassHandler();
+    $this->instance = new ClassRouteHandler( new ArgumentResolver());
   }
   
   
