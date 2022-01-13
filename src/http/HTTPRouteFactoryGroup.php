@@ -49,12 +49,11 @@ class HTTPRouteFactoryGroup implements IHTTPRouteFactory
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
    * @param IHTTPRouteRequest $request 
-   * @return array<IHTTPRoute> Possible routes 
+   * @return \Generator<IHTTPRoute> Possible routes 
    */
-  public function getPossibleRoutes( IHTTPRouteRequest $request ) : array
+  public function getPossibleRoutes( IHTTPRouteRequest $request ) : \Generator
   {
     /** @var array<IHTTPRoute> $out */
-    $out = [];
     
     foreach( $this->factoryList as $factory )
     {
@@ -62,10 +61,8 @@ class HTTPRouteFactoryGroup implements IHTTPRouteFactory
       {
         assert( $route instanceof IHTTPRoute );
         
-        $out[] = $route;
+        yield $route;
       }
     }
-    
-    return $out;
   }  
 }

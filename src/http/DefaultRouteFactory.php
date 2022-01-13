@@ -98,12 +98,10 @@ class DefaultRouteFactory implements IHTTPRouteFactory
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
    * @param IHTTPRouteRequest $request 
-   * @return array<IHTTPRoute> Possible routes 
+   * @return \Generator<IHTTPRoute> Possible routes 
    */
-  public function getPossibleRoutes( IHTTPRouteRequest $request ) : array
+  public function getPossibleRoutes( IHTTPRouteRequest $request ) : \Generator
   {
-    $out = [];
-    
     for ( $bucket = $this->getBucket( $request->getURI()); $bucket >= 0; $bucket-- )
     {
       if ( !isset( $this->routes[$bucket] ))
@@ -114,12 +112,10 @@ class DefaultRouteFactory implements IHTTPRouteFactory
         foreach( $dataList as $data )
         {
           
-          $out[] = $this->createRoute( $path, $data[0], $data[1], $data[2] );
+          yield $this->createRoute( $path, $data[0], $data[1], $data[2] );
         }
       }
     } 
-    
-    return $out;      
   }
   
   

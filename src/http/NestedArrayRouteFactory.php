@@ -137,15 +137,11 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
   /**
    * Retrieve a list of possible route patterns and configurations based on the supplied uri 
    * @param IHTTPRouteRequest $request 
-   * @return IHTTPRoute[] Possible routes 
+   * @return \Generator<IHTTPRoute> Possible routes 
    */
-  public function getPossibleRoutes( IHTTPRouteRequest $request ) : array
+  public function getPossibleRoutes( IHTTPRouteRequest $request ) : \Generator
   {
     $this->initialize();
-    
-    
-    $out = [];
-    
     for ( $bucket = $this->getBucket( $request->getURI()); $bucket >= 0; $bucket-- )
     {
       if ( !isset( $this->routeBuckets[$bucket] ))
@@ -165,12 +161,10 @@ abstract class NestedArrayRouteFactory implements IHTTPRouteFactory
           assert( isset( $data[self::T_OPTIONS] ) && is_array( $data[self::T_OPTIONS] ));
           assert( isset( $data[self::T_CONTEXT] ) && is_array( $data[self::T_CONTEXT] ));
 
-          $out[] = $this->createRoute( $path, $data[self::T_CLASS], $data[self::T_METHOD], $data[self::T_OPTIONS], $data[self::T_CONTEXT] );
+          yield $this->createRoute( $path, $data[self::T_CLASS], $data[self::T_METHOD], $data[self::T_OPTIONS], $data[self::T_CONTEXT] );
         }
       }
     } 
-    
-    return $out;      
   } 
   
   

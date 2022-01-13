@@ -34,7 +34,7 @@ class ArrayRouteFactoryTest extends TestCase
     
     $phpunit = $this;
     
-    (new ArrayRouteFactory( 
+    foreach(( new ArrayRouteFactory( 
       $mockConfig, 
       function( string $path, string $class, string $method, array $options, array $context ) use ($phpunit) : IHTTPRoute {
         
@@ -50,7 +50,10 @@ class ArrayRouteFactoryTest extends TestCase
         
         return $phpunit->getMockBuilder( IHTTPRoute::class )->getMock();
       }
-    ))->getPossibleRoutes( $this->getMockRequest( '' ));
+    ))->getPossibleRoutes( $this->getMockRequest( '' )) as $g )
+    {
+      //..do nothing, this is tested inside of the above function 
+    }
   }
   
   

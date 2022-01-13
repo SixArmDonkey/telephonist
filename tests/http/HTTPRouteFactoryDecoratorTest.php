@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 
 class HTTPRouteFactoryDecoratorTest extends TestCase
 {
+  
   /**
    * Tests that the constructor accepts a single instance of factory 
    * @return void
@@ -43,13 +44,21 @@ class HTTPRouteFactoryDecoratorTest extends TestCase
     
     $routes = [$mockRoute1, $mockRoute2];
     
-    $mockFactory->method( 'getPossibleRoutes' )->willReturn( $routes );
+    $mockFactory->method( 'getPossibleRoutes' )->will( $this->generate( $routes ));
     
     $c = new \buffalokiwi\telephonist\http\HTTPRouteFactoryDecorator( $mockFactory );
     
-    $res = $c->getPossibleRoutes( $mockRequest );
+    $yres = $c->getPossibleRoutes( $mockRequest );
     
-    $this->assertIsArray( $res );
+    $this->assertInstanceOf( Generator::class, $yres );
+    
+    
+    $res = [];
+    foreach( $yres as $y )
+    {
+      $res[] = $y;
+    }    
+    
     $this->assertEquals( 2, sizeof( $res ));
     
     list( $a, $b ) = array_values( $res );
@@ -57,4 +66,16 @@ class HTTPRouteFactoryDecoratorTest extends TestCase
     $this->assertTrue( $mockRoute1 === $a || $mockRoute1 === $b );
     $this->assertTrue( $mockRoute2 === $a || $mockRoute2 === $b );
   }
+  
+
+  private function generate( array $y )
+  {
+    return $this->returnCallback( function() use ( $y ) 
+    {
+      foreach ( $y as $v )
+      {
+        yield $v;
+      }
+    });
+  }  
 }

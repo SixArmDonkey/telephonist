@@ -224,7 +224,7 @@ class NestedArrayRouteFactoryTest extends TestCase
   {
     $c = $this->getInstance( self::TEST1 );
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( '' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( '' )));
     
     $this->assertCount( 1, $res );
     $this->assertTrue( isset( $res[0] ));
@@ -237,7 +237,7 @@ class NestedArrayRouteFactoryTest extends TestCase
   {
     $c = $this->getInstance( self::TEST2 );
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( '' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( '' )));
     
     $this->assertCount( 2, $res );
     $this->assertTrue( isset( $res[0] ));
@@ -256,7 +256,7 @@ class NestedArrayRouteFactoryTest extends TestCase
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '' )));
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '/' )));
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( 'a/b' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( 'a/b' )));
 
     $this->assertCount( 1, $res );
     $this->assertTrue( isset( $res[0] ));
@@ -272,7 +272,7 @@ class NestedArrayRouteFactoryTest extends TestCase
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '' )));
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '/' )));
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( 'a/b' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( 'a/b' )));
 
     $this->assertCount( 1, $res );
     $this->assertTrue( isset( $res[0] ));
@@ -290,7 +290,7 @@ class NestedArrayRouteFactoryTest extends TestCase
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '' )));
     $this->assertCount( 0, $c->getPossibleRoutes( $this->getMockRequest( '/' )));
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( 'a/b' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( 'a/b' )));
     
 
     $this->assertCount( 2, $res );
@@ -307,13 +307,13 @@ class NestedArrayRouteFactoryTest extends TestCase
   {
     $c = $this->getInstance( self::TEST6 );
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( '' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( '' )));
     $this->assertCount( 1, $res );
     $this->assertTrue( isset( $res[0] ));
     $this->assertInstanceOf( IHTTPRoute::class, $res[0] );
     $this->assertPath1( 'path6', $res[0]->__getTestData());    
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( 'a/b' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( 'a/b' )));
     $this->assertCount( 2, $res );
     $this->assertTrue( isset( $res[0] ));
     $this->assertTrue( isset( $res[1] ));
@@ -328,7 +328,7 @@ class NestedArrayRouteFactoryTest extends TestCase
   {
     $c = $this->getInstance( self::TEST7 );
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( '' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( '' )));
     
     $this->assertCount( 3, $res );
     $this->assertTrue( isset( $res[0] ));
@@ -342,7 +342,7 @@ class NestedArrayRouteFactoryTest extends TestCase
     $this->assertPath1( 'path6', $res[2]->__getTestData());
     
     
-    $res = $c->getPossibleRoutes( $this->getMockRequest( 'a/b' ));
+    $res = $this->genToArray( $c->getPossibleRoutes( $this->getMockRequest( 'a/b' )));
     $this->assertCount( 8, $res );
     $this->assertTrue( isset( $res[0] ));
     $this->assertTrue( isset( $res[1] ));
@@ -428,5 +428,29 @@ class NestedArrayRouteFactoryTest extends TestCase
     }
     
     echo 'not found';
+  }
+  
+  
+  private function generate( array $y )
+  {
+    return $this->returnCallback( function() use ( $y ) 
+    {
+      foreach ( $y as $v )
+      {
+        yield $v;
+      }
+    });
+  }  
+
+
+  private function genToArray( \Generator $g ) : array
+  {
+    $out = [];
+    foreach( $g as $v )
+    {
+      $out[] = $v;
+    }
+    
+    return $out;
   }
 }
