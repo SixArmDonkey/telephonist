@@ -17,10 +17,7 @@ use ReflectionMethod;
 
   
 /**
- * Given some reflection stuff and possibly additional input arguments, convert them to
- * instances, named arguments, whatever we need to instantiate or invoke something.
- * 
- * (worst description ever)
+ * Using the PHP Reflection API, determine the type, number and values of arguments used when invoking some method.
  */
 interface IArgumentResolver
 {

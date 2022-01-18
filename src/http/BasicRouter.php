@@ -19,14 +19,14 @@ use Closure;
 /**
  * A very basic router.
  * 
- * new QuickRouter([
+ * new BasicRouter([
  
  * ]);
  * 
  * 
  * 
  */
-class QuickRouter extends DefaultHTTPRouter
+class BasicRouter extends DefaultHTTPRouter
 {
   /**
    * 

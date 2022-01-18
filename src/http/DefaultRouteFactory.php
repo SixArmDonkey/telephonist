@@ -110,8 +110,7 @@ class DefaultRouteFactory implements IHTTPRouteFactory
       foreach( $this->routes[$bucket] as $path => $dataList )
       {
         foreach( $dataList as $data )
-        {
-          
+        {          
           yield $this->createRoute( $path, $data[0], $data[1], $data[2] );
         }
       }

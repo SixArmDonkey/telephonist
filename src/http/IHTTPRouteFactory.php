@@ -14,7 +14,7 @@ namespace buffalokiwi\telephonist\http;
 
 
 /**
- * A factory for creating instances of IRoute 
+ * A factory for creating instances of IHTTPRoute 
  */
 interface IHTTPRouteFactory
 {

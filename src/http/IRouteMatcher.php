@@ -19,7 +19,7 @@ interface IRouteMatcher
    * @param string $pattern Some pattern 
    * @param string $uri The pattern subject 
    * @return array A map of matches
-   * This may use integer keys for positional arguments and/or 
+   * This may use integer keys for positional arguments or strings for named arguments
    */
   public function match( string $pattern, string $uri ) : array;
 }

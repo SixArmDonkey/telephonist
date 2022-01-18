@@ -23,6 +23,12 @@ use function ctype_digit;
 use function \json_encode;
 
 
+/**
+ * Given some reflection stuff and possibly additional input arguments, convert them to
+ * instances, named arguments, whatever we need to instantiate or invoke something.
+ * 
+ * (worst description ever)
+ */
 class ArgumentResolver implements IArgumentResolver
 {
   /**

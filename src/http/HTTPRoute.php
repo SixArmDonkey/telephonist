@@ -196,8 +196,7 @@ abstract class HTTPRoute implements IHTTPRoute
             $newMatches[$k] = $v;
             break;
           }
-        }    
-
+        }
       }      
       
       $this->setArguments( $newMatches, $matchedValues );
