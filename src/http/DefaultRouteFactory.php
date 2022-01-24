@@ -13,9 +13,9 @@ declare( strict_types=1 );
 namespace buffalokiwi\telephonist\http;
 
 use buffalokiwi\telephonist\handler\FunctionRouteHandler;
-use buffalokiwi\telephonist\handler\IRouteHandler;
 use buffalokiwi\telephonist\RouteConfigurationException;
 use Closure;
+use Generator;
 use InvalidArgumentException;
 
 
@@ -59,6 +59,7 @@ class DefaultRouteFactory implements IHTTPRouteFactory
   /**
    * @param bool $addContextToNamedArguments When true, the context array is added to the arguments array as 'context'
    * @return \Closure fn( string $path, \Closure $endpoint, array $options, array $context ) : IHTTPRoute
+   * @static
    */
   public static final function createDefaultRouteFactory( bool $addContextToNamedArguments = false ) : \Closure
   {
@@ -100,7 +101,7 @@ class DefaultRouteFactory implements IHTTPRouteFactory
    * @param IHTTPRouteRequest $request 
    * @return \Generator<IHTTPRoute> Possible routes 
    */
-  public function getPossibleRoutes( IHTTPRouteRequest $request ) : \Generator
+  public function getPossibleRoutes( IHTTPRouteRequest $request ) : Generator
   {
     for ( $bucket = $this->getBucket( $request->getURI()); $bucket >= 0; $bucket-- )
     {

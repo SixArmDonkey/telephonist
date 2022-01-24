@@ -72,7 +72,7 @@ class ArgumentResolver implements IArgumentResolver
    * @param array $context Route context
    * @return array prepared arguments.  This may be named or positional.
    */
-  public function prepareClassArgs( ReflectionClass $c, array $context )
+  public function prepareClassArgs( ReflectionClass $c, array $context ) : array
   {
     return $this->reflectionParametersToArgumentsArray(
       $this->getArgumentArray( self::C_ARGS_CLASS, $context ),

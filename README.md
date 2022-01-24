@@ -1,20 +1,20 @@
 # BuffaloKiwi Telephonist
-** Party like it's 1899 ** 
 
-This is a "router" library, which will execute some program based on a client request.
-
+Telephonist is a simple PHP router library, which is a program for mapping http requests to handlers based on various
+matching criteria.
 
 ## Router interfaces
 
-IArgumentResolver - Using the PHP Reflection API, determine the type, number and values of arguments used when invoking some method
-IRouteHandler - Route handlers are responsible for locating some endpoint and returning the content.  This can be anything, a file, class, some global function, an RPC, etc.
-IHTTPRoute - An object representing a potential destination and the requirements for connection.  
-IHTTPRouteOption - Used to extend the conditions required for route matching.  This can be anything, such as the HTTP Method, accept headers, authentication tokens, etc.
-IHTTPRouteOptions - A collection of IHTTPRouteOption
-IHTTPRouteFactory - A factory optionally used to supply instances of IHTTPRoute to implementations of IHTTPRouter
+Telephonist is composed of several interfaces.  
 
-IHTTPRouteRequest - Represents a HTTP Request message and exposes the relevant parts to the router
-IHTTPRouter - The program responsible for determining which route to invoke based on some client request 
+* IArgumentResolver - Using the PHP Reflection API, determine the type, number and values of arguments used when invoking some method  
+* IRouteHandler - Route handlers are responsible for locating some endpoint and returning the content.  This can be anything, a file, class, some global function, an RPC, etc.  
+* IHTTPRoute - An object representing a potential destination and the requirements for connection.  
+* IHTTPRouteOption - Used to extend the conditions required for route matching.  This can be anything, such as the HTTP Method, accept headers, authentication tokens, etc.  
+* IHTTPRouteOptions - A collection of IHTTPRouteOption  
+* IHTTPRouteFactory - A factory optionally used to supply instances of IHTTPRoute to implementations of IHTTPRouter  
+* IHTTPRouteRequest - Represents a HTTP Request message and exposes the relevant parts to the router  
+* IHTTPRouter - The program responsible for determining which route to invoke based on some client request   
 
 
 ## The most basic router possible
@@ -40,7 +40,7 @@ Arguments can be added by using standard capture groups
 ```php
 try {
   echo ( new BasicRouter([
-    '(\d+)' => fn( $id ) => 'Found digit ' . $id
+    '(\d+)' => fn( int $id ) => 'Found digit ' . $id
   ]))->route( new DefaultHTTPRouteRequest( $_SERVER ));
 } catch( RouteNotFoundException $e ) {
   http_response_code( $e->getCode());  
@@ -49,9 +49,11 @@ try {
 http://localhost/1 displays: "Found digit 1"
 
 
-** We can used named arguments by using named capture groups like this **
+**We can used named arguments by using named capture groups like this**
 
-If named arguments are used, then ALL arguments must be named.  No mixing positional arguments with named arguments.
+If named arguments are used, then ALL arguments must be named.  Mixing of positional arguments with named arguments is not allowed.
+
+In the following example, naming $id anything other than $id will throw an exception.
 
 ```php
 try {
@@ -60,7 +62,7 @@ try {
   ]))->route( new DefaultHTTPRouteRequest( $_SERVER ));
 } catch( RouteNotFoundException $e ) {
   http_response_code( $e->getCode());  
-}    
+}
 ```
 
 

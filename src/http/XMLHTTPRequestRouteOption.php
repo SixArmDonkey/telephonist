@@ -41,7 +41,7 @@ class XMLHTTPRequestRouteOption extends HTTPRouteOption
    * @throws RouteValidationException
    */
   public function validate( IHTTPRouteRequest $request, IHTTPRoute $route ) : bool
-  {    
+  {
     if ( !in_array( self::COMMAND, $route->getOptions()))
       return true;
     
