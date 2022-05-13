@@ -68,7 +68,7 @@ class ArgumentResolver implements IArgumentResolver
   
   /**
    * Prepare the class arguments for some constructor
-   * @param ReflectionClass $c Constructor params 
+   * @param ReflectionClass $c Constructor params
    * @param array $context Route context
    * @return array prepared arguments.  This may be named or positional.
    */
@@ -77,8 +77,8 @@ class ArgumentResolver implements IArgumentResolver
     return $this->reflectionParametersToArgumentsArray(
       $this->getArgumentArray( self::C_ARGS_CLASS, $context ),
       ...( $c->getConstructor()?->getParameters() ?? [] )
-    ); 
-  }  
+    );
+  }
   
    
   /**
@@ -92,11 +92,11 @@ class ArgumentResolver implements IArgumentResolver
    * @return array Prepared arguments. This may be named or positional.
    */
   public function prepareMethodArgs( ReflectionMethod $m, array $args, array $context ) : array
-  {    
-    return $this->reflectionParametersToArgumentsArray( 
+  {
+    return $this->reflectionParametersToArgumentsArray(
       $args + $this->getArgumentArray( self::C_ARGS_METHOD, $context ),
       ...$m->getParameters()
-    );           
+    );
   }
   
   

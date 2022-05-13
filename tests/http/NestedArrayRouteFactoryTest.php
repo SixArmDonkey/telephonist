@@ -10,9 +10,6 @@
 
 declare( strict_types=1 );
 
-
-namespace NestedARrayRouteFactoryTest;
-
 use buffalokiwi\telephonist\handler\ArgumentResolver;
 use buffalokiwi\telephonist\handler\ClassRouteHandler;
 use buffalokiwi\telephonist\http\ArrayRouteFactory;
@@ -443,7 +440,7 @@ class NestedArrayRouteFactoryTest extends TestCase
   }  
 
 
-  private function genToArray( \Generator $g ) : array
+  private function genToArray( Generator $g ) : array
   {
     $out = [];
     foreach( $g as $v )

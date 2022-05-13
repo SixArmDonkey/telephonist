@@ -10,9 +10,6 @@
 
 declare( strict_types=1 );
 
-
-namespace NestedARrayRouteFactoryTest;
-
 use buffalokiwi\telephonist\http\ArrayRouteFactory;
 use buffalokiwi\telephonist\http\IHTTPRoute;
 use buffalokiwi\telephonist\http\IHTTPRouteRequest;

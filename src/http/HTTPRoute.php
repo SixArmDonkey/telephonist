@@ -34,7 +34,7 @@ abstract class HTTPRoute implements IHTTPRoute
    * @var IRouteHandler
    */
   private IRouteHandler $routeHandler;
-    
+  
   /**
    * A regular expression used to match this route 
    * @var string

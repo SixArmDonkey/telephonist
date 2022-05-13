@@ -3,18 +3,69 @@
 Telephonist is a simple PHP router library, which is a program for mapping http requests to handlers based on various
 matching criteria.
 
-## Router interfaces
+Table of Contents 
 
-Telephonist is composed of several interfaces.  
+1. [What's in the box?](#interfaces-and-implementations]
+2. Basic Routing
+3. 
 
-* IArgumentResolver - Using the PHP Reflection API, determine the type, number and values of arguments used when invoking some method  
-* IRouteHandler - Route handlers are responsible for locating some endpoint and returning the content.  This can be anything, a file, class, some global function, an RPC, etc.  
-* IHTTPRoute - An object representing a potential destination and the requirements for connection.  
-* IHTTPRouteOption - Used to extend the conditions required for route matching.  This can be anything, such as the HTTP Method, accept headers, authentication tokens, etc.  
-* IHTTPRouteOptions - A collection of IHTTPRouteOption  
-* IHTTPRouteFactory - A factory optionally used to supply instances of IHTTPRoute to implementations of IHTTPRouter  
-* IHTTPRouteRequest - Represents a HTTP Request message and exposes the relevant parts to the router  
-* IHTTPRouter - The program responsible for determining which route to invoke based on some client request   
+
+
+## Interfaces and Implementations
+
+
+### Interfaces 
+
+
+1. **Handlers**
+    1. IArgumentResolver - Using the PHP Reflection API, determine the type, number and values of arguments used when invoking some method  
+    2. IRouteHandler - Route handlers are responsible for locating some endpoint and returning the content.  This can be anything, a file, class, some global function, an RPC, etc.  
+2. **Route Objects**
+    1. IHTTPRoute - An object representing a potential destination and the requirements for connection.  
+    2. IHTTPRouteFactory - A factory optionally used to supply instances of IHTTPRoute to implementations of IHTTPRouter  
+3. **Route Options**
+    1. IHTTPRouteOption - Used to extend the conditions required for route matching.  This can be anything, such as the HTTP Method, accept headers, authentication tokens, etc.  
+    2. IHTTPRouteOptions - A collection of IHTTPRouteOption  
+4. **Request for Routing**
+    1. IHTTPRouteRequest - Represents a HTTP Request message and exposes the relevant parts to the router  
+5. **Router**
+    1. IHTTPRouter - The program responsible for determining which route to invoke based on some client request   
+
+
+### Implementations
+
+1. **Handlers**
+ArgumentResolver
+ClassRouteHandler
+FunctionRouteHandler
+
+2. **Route Objects**
+ArrayRouteFactory
+HTTPRoute 
+ClassHTTPRoute
+DefaultHTTPRoute
+DefaultHTTPRouteFactory
+NestedArrayRouteFactory
+HTTPRouteFactoryGroup
+
+3. **Route Options**
+DefaultHTTPRouteOptions
+HTTPRouteOption
+MethodRouteOption
+XMLHTTPRequestRouteOption
+
+4. **Request for Routing**
+DefaultHTTPRouteRequest 
+
+5. **Router**
+BasicRouter
+DefaultHTTPRouter
+  
+
+
+
+
+
 
 
 ## The most basic router possible
