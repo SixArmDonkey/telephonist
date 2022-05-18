@@ -93,10 +93,26 @@ class ArgumentResolver implements IArgumentResolver
    */
   public function prepareMethodArgs( ReflectionMethod $m, array $args, array $context ) : array
   {
+    $margs = $this->getArgumentArray( self::C_ARGS_METHOD, $context );
+    foreach( $args as $k => $v )
+    {
+      switch( $k )
+      {
+        //..Sorry that things can't be named context
+        case 'context': //..fall through
+          break;
+        
+        default:
+          $margs[$k] = $v;
+      }
+    }
+    
     return $this->reflectionParametersToArgumentsArray(
-      $args + $this->getArgumentArray( self::C_ARGS_METHOD, $context ),
+      $margs,
       ...$m->getParameters()
     );
+
+
   }
   
   
